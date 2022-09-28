@@ -1,0 +1,26 @@
+version: "3.8"
+services:
+    database:
+        image: postgres:12.12
+        restart: always
+        container_name: crm_database
+        environment:
+            - POSTGRES_PASSWORD=password
+            - POSTGRES_DB=crm
+        volumes:
+            - dbdata:/var/lib/postgresql/data
+
+    web:
+        build: .
+        image: crm_web
+        restart: always
+        container_name: crm_web
+        depends_on:
+            - database
+        ports:
+            - "5000:5000"
+        volumes:
+            - .:/newdir
+
+volumes:
+    dbdata:
