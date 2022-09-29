@@ -25,9 +25,51 @@ class UserManagementTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function test_user_can_be_created()
+    public function test_logged_out_user_cannot_create_users()
     {
         $response = $this->post('/users', [
+            'name' => 'test_name',
+            'email' => 'test_email',
+            'password' => 'test_password',
+        ]);
+
+        $this->assertDatabaseMissing('users', [
+            'name' => 'test_name',
+            'email' => 'test_email',
+        ]);
+
+        $response->assertRedirect('/login');
+    }
+
+    public function test_logged_out_user_cannot_edit_users()
+    {
+        $user = User::factory()->create();
+        $response = $this->put('/users/' . $user->id, [
+            'name' => 'edit_' . $user->name,
+            'email' => 'edit_' . $user->email,
+            'password' => 'edit_password',
+        ]);
+
+        $this->assertDatabaseMissing('users', [
+            'name' => 'edit_' . $user->name,
+            'email' => 'edit_' . $user->email,
+        ]);
+
+        $response->assertRedirect('/login');
+    }
+
+    public function test_logged_out_user_cannot_delete_users()
+    {
+        $user = User::factory()->create();
+        $response = $this->delete('/users/' . $user->id);
+
+        $this->assertModelExists($user);
+        $response->assertRedirect('/login');
+    }
+
+    public function test_user_can_be_created()
+    {
+        $response = $this->login()->post('/users', [
             'name' => 'test_name',
             'email' => 'test_email',
             'password' => 'test_password',
@@ -50,7 +92,7 @@ class UserManagementTest extends TestCase
             'name' => 'edit_' . $user->name,
         ];
 
-        $response = $this->put('/users/' . $user->id, $newData);
+        $response = $this->login()->put('/users/' . $user->id, $newData);
 
         $this->assertDatabaseHas('users', $newData);
         $response->assertRedirect('/users/' . $user->id);
@@ -59,9 +101,18 @@ class UserManagementTest extends TestCase
     public function test_user_can_be_deleted()
     {
         $user = User::factory()->create();
-        $response = $this->delete('/users/' . $user->id);
+        $response = $this->login()->delete('/users/' . $user->id);
 
         $this->assertModelMissing($user);
         $response->assertRedirect('/users');
     }
+
+    /*
+        Helpers
+    */
+    private function login()
+	{
+		$user = User::factory()->create();
+		return $this->actingAs($user);
+	}
 }
