@@ -31,7 +31,26 @@ class ProjectManagementTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function test_logged_out_user_cannot_create_projects()
+    public function test_guest_cannot_access_creation_page()
+    {
+        $response = $this->get('/projects/create');
+
+        $response->assertRedirect('/login');
+    }
+
+    public function test_guest_cannot_access_edit_page()
+    {
+        $project = Project::factory()
+            ->for(Client::factory())
+            ->for(User::factory())
+            ->create();
+
+        $response = $this->get('/projects/' . $project->id . '/edit');
+
+        $response->assertRedirect('/login');
+    }
+
+    public function test_guest_cannot_create_projects()
     {
         $client = Client::factory()->create();
         $user = User::factory()->create();
@@ -58,7 +77,7 @@ class ProjectManagementTest extends TestCase
         $response->assertRedirect('/login');
     }
 
-    public function test_logged_out_user_cannot_edit_projects()
+    public function test_guest_cannot_edit_projects()
     {
         $client1 = Client::factory()->create();
         $client2 = Client::factory()->create();
@@ -104,7 +123,7 @@ class ProjectManagementTest extends TestCase
         $response->assertRedirect('/login');
     }
 
-    public function test_logged_out_user_cannot_delete_projects()
+    public function test_guest_cannot_delete_projects()
     {
         $client = Client::factory()->create();
         $user = User::factory()->create();
@@ -122,11 +141,133 @@ class ProjectManagementTest extends TestCase
         $response->assertRedirect('/login');
     }
 
-    public function test_project_can_be_created()
+    public function test_non_admin_user_cannot_access_creation_page()
+    {
+        $response = $this->login()->get('/projects/create');
+
+        $response->assertRedirect('/unauthorized');
+    }
+
+    public function test_non_admin_user_cannot_access_edit_page()
+    {
+        $project = Project::factory()
+            ->for(Client::factory())
+            ->for(User::factory())
+            ->create();
+
+        $response = $this->login()->get('/projects/' . $project->id . '/edit');
+
+        $response->assertRedirect('/unauthorized');
+    }    
+
+    public function test_non_admin_user_cannot_create_projects()
     {
         $client = Client::factory()->create();
         $user = User::factory()->create();
         $response = $this->login()->post('/projects', [
+            'title' => 'test_title',
+            'description' => 'test_description',
+            'deadline' => '2000-01-01',
+            'status' => Project::OPEN_STATUS,
+            'company' => $client->company,
+            'user_email' => $user->email,
+        ]);
+
+        $this->assertDatabaseMissing('projects', [
+            'title' => 'test_title',
+            'description' => 'test_description',
+            'deadline' => '2000-01-01',
+            'status' => Project::OPEN_STATUS,
+            'client_id' => $client->id,
+            'user_id' => $user->id,
+        ]);
+
+        $this->assertNull($client->projects()->where('title', 'test_title')->first());
+        $this->assertNull($user->projects()->where('title', 'test_title')->first());
+        $response->assertRedirect('/unauthorized');
+    }
+
+    public function test_non_admin_user_cannot_edit_projects()
+    {
+        $client1 = Client::factory()->create();
+        $client2 = Client::factory()->create();
+        $user1 = User::factory()->create();
+        $user2 = User::factory()->create();
+        $project = Project::factory()
+            ->for($client1)
+            ->for($user1)
+            ->closed()
+            ->create();
+
+        $response = $this->login()->put('/projects/' . $project->id, [
+            'title' => 'edit_' . $project->title,
+            'description' => 'edit_' . $project->description,
+            'deadline' => '2000-01-01',
+            'status' => Project::OPEN_STATUS,
+            'company' => $client2->company,
+            'user_email' => $user2->email,
+        ]);
+
+        $this->assertDatabaseMissing('projects', [
+            'title' => 'edit_' . $project->title,
+            'description' => 'edit_' . $project->description,
+            'deadline' => '2000-01-01',
+            'status' => Project::OPEN_STATUS,
+            'client_id' => $client2->id,
+            'user_id' => $user2->id,
+        ]);
+
+        $this->assertModelExists($project);
+        $title = $project->title;
+        $this->assertNotNull($client1->projects()->where('title', $title)->first());
+        $this->assertNotNull($user1->projects()->where('title', $title)->first());
+        $this->assertNull($client2->projects()->where('title', $title)->first());
+        $this->assertNull($user2->projects()->where('title', $title)->first());
+        $response->assertRedirect('/unauthorized');
+    }
+
+    public function test_non_admin_user_cannot_delete_projects()
+    {
+        $client = Client::factory()->create();
+        $user = User::factory()->create();
+        $project = Project::factory()
+            ->for($client)
+            ->for($user)
+            ->state(['title' => 'test_title'])
+            ->create();
+
+        $response = $this->login()->delete('/projects/' . $project->id);
+
+        $this->assertModelExists($project);
+        $this->assertNotNull($client->projects()->where('title', 'test_title')->first());
+        $this->assertNotNull($user->projects()->where('title', 'test_title')->first());
+        $response->assertRedirect('/unauthorized');
+    }
+
+    public function test_admin_can_access_creation_page()
+    {
+        $response = $this->login(true)->get('/projects/create');
+
+        $response->assertStatus(200);
+    }
+
+    public function test_admin_can_access_edit_page()
+    {
+        $project = Project::factory()
+            ->for(Client::factory())
+            ->for(User::factory())
+            ->create();
+
+        $response = $this->login(true)->get('/projects/' . $project->id . '/edit');
+
+        $response->assertStatus(200);
+    }    
+
+    public function test_admin_can_create_projects()
+    {
+        $client = Client::factory()->create();
+        $user = User::factory()->create();
+        $response = $this->login(true)->post('/projects', [
             'title' => 'test_title',
             'description' => 'test_description',
             'deadline' => '2000-01-01',
@@ -150,7 +291,7 @@ class ProjectManagementTest extends TestCase
         $response->assertRedirect('/projects/'  . $project->id);
     }
 
-    public function test_project_can_be_updated()
+    public function test_admin_can_edit_projects()
     {
         $client1 = Client::factory()->create();
         $client2 = Client::factory()->create();
@@ -162,7 +303,7 @@ class ProjectManagementTest extends TestCase
             ->closed()
             ->create();
 
-        $response = $this->login()->put('/projects/' . $project->id, [
+        $response = $this->login(true)->put('/projects/' . $project->id, [
             'title' => 'edit_' . $project->title,
             'description' => 'edit_' . $project->description,
             'deadline' => '2000-01-01',
@@ -188,7 +329,7 @@ class ProjectManagementTest extends TestCase
         $response->assertRedirect('/projects/'  . $project->id);
     }
 
-    public function test_project_can_be_deleted()
+    public function test_admin_can_delete_projects()
     {
         $client = Client::factory()->create();
         $user = User::factory()->create();
@@ -198,7 +339,7 @@ class ProjectManagementTest extends TestCase
             ->state(['title' => 'test_title'])
             ->create();
 
-        $response = $this->login()->delete('/projects/' . $project->id);
+        $response = $this->login(true)->delete('/projects/' . $project->id);
 
         $this->assertModelMissing($project);
         $this->assertNull($client->projects()->where('title', 'test_title')->first());
@@ -209,9 +350,11 @@ class ProjectManagementTest extends TestCase
     /*
         Helpers
     */
-    private function login()
+    private function login($asAdmin = false)
 	{
-		$user = User::factory()->create();
+		$user = $asAdmin
+			? User::factory()->admin()->create()
+			: User::factory()->create();
 		return $this->actingAs($user);
 	}
 }

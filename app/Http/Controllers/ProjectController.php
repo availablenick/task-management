@@ -11,7 +11,7 @@ class ProjectController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth')->only(['store', 'update', 'destroy']);
+        $this->middleware('auth')->except(['index', 'show']);
     }
 
     /**
@@ -29,9 +29,11 @@ class ProjectController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function create()
+    public function create(Request $request)
     {
-        //
+        if ($request->user()->cannot('create', Project::class)) {
+            return redirect()->route('unauthorized');
+        }
     }
 
     /**
@@ -42,6 +44,10 @@ class ProjectController extends Controller
      */
     public function store(Request $request)
     {
+        if ($request->user()->cannot('create', Project::class)) {
+            return redirect()->route('unauthorized');
+        }
+
         $project = new Project();
         $project->title = $request->title;
         $project->description = $request->description;
@@ -70,9 +76,11 @@ class ProjectController extends Controller
      * @param  \App\Models\Project  $project
      * @return \Illuminate\Http\Response
      */
-    public function edit(Project $project)
+    public function edit(Request $request, Project $project)
     {
-        //
+        if ($request->user()->cannot('update', $project)) {
+            return redirect()->route('unauthorized');
+        }
     }
 
     /**
@@ -84,6 +92,10 @@ class ProjectController extends Controller
      */
     public function update(Request $request, Project $project)
     {
+        if ($request->user()->cannot('update', $project)) {
+            return redirect()->route('unauthorized');
+        }
+
         $project->title = $request->title;
         $project->description = $request->description;
         $project->deadline = $request->deadline;
@@ -100,8 +112,12 @@ class ProjectController extends Controller
      * @param  \App\Models\Project  $project
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Project $project)
+    public function destroy(Request $request, Project $project)
     {
+        if ($request->user()->cannot('delete', $project)) {
+            return redirect()->route('unauthorized');
+        }
+
         $project->delete();
         return redirect()->route('projects.index');
     }
