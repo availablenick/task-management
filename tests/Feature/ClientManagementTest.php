@@ -26,7 +26,22 @@ class ClientManagementTest extends TestCase
 		$response->assertStatus(200);
 	}
 
-	public function test_logged_out_user_cannot_create_clients()
+	public function test_guest_cannot_access_creation_page()
+	{
+		$response = $this->get('/clients/create');
+
+		$response->assertRedirect('/login');
+	}
+
+	public function test_guest_cannot_access_edit_page()
+	{
+		$client = Client::factory()->create();
+		$response = $this->get('/clients/' . $client->id . '/edit');
+
+		$response->assertRedirect('/login');
+	}
+
+	public function test_guest_cannot_create_clients()
 	{
 		$response = $this->post('/clients', [
 			'company' => 'test_company',
@@ -45,7 +60,7 @@ class ClientManagementTest extends TestCase
 		$response->assertRedirect('/login');
 	}
 
-	public function test_logged_out_user_cannot_edit_clients()
+	public function test_guest_cannot_edit_clients()
 	{
 		$client = Client::factory()->create();
 		$newData = [
@@ -61,7 +76,7 @@ class ClientManagementTest extends TestCase
 		$response->assertRedirect('/login');
 	}
 
-	public function test_logged_out_user_cannot_delete_clients()
+	public function test_guest_cannot_delete_clients()
 	{
 		$client = Client::factory()->create();
 		$response = $this->delete('/clients/' . $client->id);
@@ -70,9 +85,84 @@ class ClientManagementTest extends TestCase
 		$response->assertRedirect('/login');
 	}
 
-	public function test_client_can_be_created()
+	public function test_non_admin_user_cannot_access_creation_page()
+	{
+		$response = $this->login()->get('/clients/create');
+
+		$response->assertRedirect('/unauthorized');
+	}
+
+	public function test_non_admin_user_cannot_access_edit_page()
+	{
+		$client = Client::factory()->create();
+		$response = $this->login()->get('/clients/' . $client->id . '/edit');
+
+		$response->assertRedirect('/unauthorized');
+	}
+
+	public function test_non_admin_user_cannot_create_clients()
 	{
 		$response = $this->login()->post('/clients', [
+			'company' => 'test_company',
+			'vat' => 12345,
+			'address' => 'test_address',
+			'is_active' => true,
+		]);
+
+		$this->assertDatabaseMissing('clients', [
+			'company' => 'test_company',
+			'vat' => 12345,
+			'address' => 'test_address',
+			'is_active' => true,
+		]);
+
+		$response->assertRedirect('/unauthorized');
+	}
+
+	public function test_non_admin_user_cannot_edit_clients()
+	{
+		$client = Client::factory()->create();
+		$newData = [
+			'company' => 'edit_' . $client->company,
+			'vat' => $client->vat + 1,
+			'address' => 'edit_' . $client->address,
+			'is_active' => !$client->is_active,
+		];
+
+		$response = $this->login()->put('/clients/' . $client->id, $newData);
+
+		$this->assertDatabaseMissing('clients', $newData);
+		$this->assertModelExists($client);
+		$response->assertRedirect('/unauthorized');
+	}
+
+	public function test_non_admin_user_cannot_delete_clients()
+	{
+		$client = Client::factory()->create();
+		$response = $this->login()->delete('/clients/' . $client->id);
+
+		$this->assertModelExists($client);
+		$response->assertRedirect('/unauthorized');
+	}
+
+	public function test_admin_can_access_creation_page()
+	{
+		$response = $this->login(true)->get('/clients/create');
+
+		$response->assertStatus(200);
+	}
+
+	public function test_admin_can_access_edit_page()
+	{
+		$client = Client::factory()->create();
+		$response = $this->login(true)->get('/clients/' . $client->id . '/edit');
+
+		$response->assertStatus(200);
+	}
+
+	public function test_admin_can_create_clients()
+	{
+		$response = $this->login(true)->post('/clients', [
 			'company' => 'test_company',
 			'vat' => 12345,
 			'address' => 'test_address',
@@ -90,7 +180,7 @@ class ClientManagementTest extends TestCase
 		$response->assertRedirect('/clients/' . $client->id);
 	}
 
-	public function test_client_can_be_updated()
+	public function test_admin_can_edit_clients()
 	{
 		$client = Client::factory()->create();
 		$newData = [
@@ -100,16 +190,16 @@ class ClientManagementTest extends TestCase
 			'is_active' => !$client->is_active,
 		];
 
-		$response = $this->login()->put('/clients/' . $client->id, $newData);
+		$response = $this->login(true)->put('/clients/' . $client->id, $newData);
 
 		$this->assertDatabaseHas('clients', $newData);
 		$response->assertRedirect('/clients/' . $client->id);
 	}
 
-	public function test_client_can_be_deleted()
+	public function test_admin_can_delete_clients()
 	{
 		$client = Client::factory()->create();
-		$response = $this->login()->delete('/clients/' . $client->id);
+		$response = $this->login(true)->delete('/clients/' . $client->id);
 
 		$this->assertModelMissing($client);
 		$response->assertRedirect('/clients');
@@ -118,9 +208,11 @@ class ClientManagementTest extends TestCase
 	/*
         Helpers
     */
-    private function login()
+    private function login($asAdmin = false)
 	{
-		$user = User::factory()->create();
+		$user = $asAdmin
+			? User::factory()->admin()->create()
+			: User::factory()->create();
 		return $this->actingAs($user);
 	}
 }

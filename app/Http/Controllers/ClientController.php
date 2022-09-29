@@ -9,7 +9,7 @@ class ClientController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth')->only(['store', 'update', 'destroy']);
+        $this->middleware('auth')->except(['index', 'show']);
     }
 
     /**
@@ -27,9 +27,11 @@ class ClientController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function create()
+    public function create(Request $request)
     {
-        //
+        if ($request->user()->cannot('create', Client::class)) {
+            return redirect()->route('unauthorized');
+        }
     }
 
     /**
@@ -40,6 +42,10 @@ class ClientController extends Controller
      */
     public function store(Request $request)
     {
+        if ($request->user()->cannot('create', Client::class)) {
+            return redirect()->route('unauthorized');
+        }
+
         $client = Client::create($request->all());
         return redirect()->route('clients.show', $client);
     }
@@ -61,9 +67,11 @@ class ClientController extends Controller
      * @param  \App\Models\Client  $client
      * @return \Illuminate\Http\Response
      */
-    public function edit(Client $client)
+    public function edit(Request $request, Client $client)
     {
-        //
+        if ($request->user()->cannot('update', $client)) {
+            return redirect()->route('unauthorized');
+        }
     }
 
     /**
@@ -75,6 +83,10 @@ class ClientController extends Controller
      */
     public function update(Request $request, Client $client)
     {
+        if ($request->user()->cannot('update', $client)) {
+            return redirect()->route('unauthorized');
+        }
+
         $client->update($request->all());
         return redirect()->route('clients.show', $client);
     }
@@ -85,8 +97,12 @@ class ClientController extends Controller
      * @param  \App\Models\Client  $client
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Client $client)
+    public function destroy(Request $request, Client $client)
     {
+        if ($request->user()->cannot('delete', $client)) {
+            return redirect()->route('unauthorized');
+        }
+
         $client->delete();
         return redirect()->route('clients.index');
     }
