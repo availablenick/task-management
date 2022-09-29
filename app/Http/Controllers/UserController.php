@@ -9,7 +9,7 @@ class UserController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth')->only(['store', 'update', 'destroy']);
+        $this->middleware('auth')->except(['index', 'show']);
     }
 
     /**
@@ -27,9 +27,11 @@ class UserController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function create()
+    public function create(Request $request)
     {
-        //
+        if ($request->user()->cannot('create', User::class)) {
+            return redirect()->route('unauthorized');
+        }
     }
 
     /**
@@ -40,6 +42,10 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
+        if ($request->user()->cannot('create', User::class)) {
+            return redirect()->route('unauthorized');
+        }
+
         $user = User::create($request->all());
         return redirect()->route('users.show', $user);
     }
@@ -61,9 +67,11 @@ class UserController extends Controller
      * @param  \App\Models\User  $user
      * @return \Illuminate\Http\Response
      */
-    public function edit(User $user)
+    public function edit(Request $request, User $user)
     {
-        //
+        if ($request->user()->cannot('update', $user)) {
+            return redirect()->route('unauthorized');
+        }
     }
 
     /**
@@ -75,6 +83,10 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user)
     {
+        if ($request->user()->cannot('update', $user)) {
+            return redirect()->route('unauthorized');
+        }
+
         $user->update($request->all());
         return redirect()->route('users.show', $user);
     }
@@ -85,8 +97,12 @@ class UserController extends Controller
      * @param  \App\Models\User  $user
      * @return \Illuminate\Http\Response
      */
-    public function destroy(User $user)
+    public function destroy(Request $request, User $user)
     {
+        if ($request->user()->cannot('delete', $user)) {
+            return redirect()->route('unauthorized');
+        }
+
         $user->delete();
         return redirect()->route('users.index');
     }

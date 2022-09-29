@@ -22,6 +22,10 @@ Route::get('/', function () {
     return view('welcome');
 })->name('welcome');
 
+Route::get('/unauthorized', function () {
+    return response('Unauthorized access', 200);
+})->name('unauthorized');
+
 Route::controller(AuthenticationController::class)->group(function () {
     Route::get('/login', 'login')->name('login');
     Route::post('/login', 'authenticate');
