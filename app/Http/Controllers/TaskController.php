@@ -10,7 +10,7 @@ class TaskController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth')->only(['store', 'update', 'destroy']);
+        $this->middleware('auth')->except(['index', 'show']);
     }
 
     /**
@@ -41,10 +41,15 @@ class TaskController extends Controller
      */
     public function store(Request $request)
     {
+        $project = Project::where('title', $request->project_title)->first();
+        if ($project->user_id != $request->user()->id) {
+            return redirect()->route('unauthorized');
+        }
+
         $task = new Task();
         $task->title = $request->title;
         $task->description = $request->description;
-        $task->project_id = Project::where('title', $request->project_title)->first()->id;
+        $task->project_id = $project->id;
         $task->save();
         return redirect()->route('tasks.show', $task);
     }
@@ -80,10 +85,11 @@ class TaskController extends Controller
      */
     public function update(Request $request, Task $task)
     {
-        $task->title = $request->title;
-        $task->description = $request->description;
-        $task->project_id = Project::where('title', $request->project_title)->first()->id;
-        $task->save();
+        if ($task->project->user_id != $request->user()->id) {
+            return redirect()->route('unauthorized');
+        }
+
+        $task->update($request->all());
         return redirect()->route('tasks.show', $task);
     }
 
@@ -93,8 +99,12 @@ class TaskController extends Controller
      * @param  \App\Models\Task  $task
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Task $task)
+    public function destroy(Request $request, Task $task)
     {
+        if ($task->project->user_id != $request->user()->id) {
+            return redirect()->route('unauthorized');
+        }
+
         $task->delete();
         return redirect()->route('tasks.index');
     }
