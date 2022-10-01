@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use DateTime;
 
 class Project extends Model
 {
@@ -20,6 +21,11 @@ class Project extends Model
         'client_id',
         'user_id',
     ];
+
+    public function getFormattedDeadlineAttribute()
+    {
+        return (new \DateTime($this->deadline))->format('m/d/Y');
+    }
 
     public function client()
     {
