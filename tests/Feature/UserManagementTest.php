@@ -79,6 +79,7 @@ class UserManagementTest extends TestCase
         $response = $this->delete('/users/' . $user->id);
 
         $this->assertModelExists($user);
+        $this->assertNotSoftDeleted($user);
         $response->assertRedirect('/login');
     }
 
@@ -163,6 +164,7 @@ class UserManagementTest extends TestCase
         $response = $this->actingAs($user2)->delete('/users/' . $user1->id);
 
         $this->assertModelExists($user1);
+        $this->assertNotSoftDeleted($user1);
         $response->assertRedirect('/unauthorized');
     }
 
@@ -171,7 +173,8 @@ class UserManagementTest extends TestCase
         $user = User::factory()->create();
         $response = $this->actingAs($user)->delete('/users/' . $user->id);
 
-        $this->assertModelMissing($user);
+        $this->assertModelExists($user);
+        $this->assertSoftDeleted($user);
         $response->assertRedirect('/users');
     }
 
@@ -226,7 +229,8 @@ class UserManagementTest extends TestCase
         $user = User::factory()->create();
         $response = $this->loginAsAdmin()->delete('/users/' . $user->id);
 
-        $this->assertModelMissing($user);
+        $this->assertModelExists($user);
+        $this->assertSoftDeleted($user);
         $response->assertRedirect('/users');
     }
 
