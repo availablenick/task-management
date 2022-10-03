@@ -4,9 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class UserController extends Controller
 {
+    private $filesystemFactory;
+
     public function __construct()
     {
         $this->middleware('auth')->except(['index', 'show']);
@@ -46,7 +49,17 @@ class UserController extends Controller
             return redirect()->route('unauthorized');
         }
 
-        $user = User::create($request->all());
+        $data = [
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => $request->password,
+        ];
+
+        if ($request->hasFile('avatar')) {
+            $data['avatar_path'] = $request->file('avatar')->store('avatars');
+        }
+
+        $user = User::create($data);
         return redirect()->route('users.show', $user);
     }
 
@@ -87,7 +100,17 @@ class UserController extends Controller
             return redirect()->route('unauthorized');
         }
 
-        $user->update($request->all());
+        $data = $request->only('name', 'email');
+        if ($request->has('password')) {
+            $data['password'] = $request->password;
+        }
+
+        if ($request->hasFile('avatar')) {
+            $data['avatar_path'] = $request->file('avatar')->store('avatars');
+        }
+
+        Storage::disk()->delete($user->avatar_path);
+        $user->update($data);
         return redirect()->route('users.show', $user);
     }
 
@@ -103,6 +126,7 @@ class UserController extends Controller
             return redirect()->route('unauthorized');
         }
 
+        Storage::disk()->delete($user->avatar_path);
         $user->delete();
         return redirect()->route('users.index');
     }

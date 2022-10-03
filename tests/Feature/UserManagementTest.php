@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class UserManagementTest extends TestCase
@@ -195,10 +197,12 @@ class UserManagementTest extends TestCase
 
     public function test_admin_can_create_users()
     {
+        Storage::fake();
         $response = $this->loginAsAdmin()->post('/users', [
             'name' => 'test_name',
             'email' => 'test_email',
             'password' => 'test_password',
+            'avatar' => UploadedFile::fake()->image('avatar.jpg'),
         ]);
 
         $this->assertDatabaseHas('users', [
@@ -207,30 +211,57 @@ class UserManagementTest extends TestCase
         ]);
 
         $user = User::where('email', 'test_email')->first();
+        $this->assertNotNull($user->avatar_path);
+        Storage::disk()->assertExists($user->avatar_path);
         $response->assertRedirect('/users/' . $user->id);
     }
 
     public function test_admin_can_edit_users()
     {
-        $user = User::factory()->create();
-        $newData = [
+        Storage::fake();
+        $response = $this->loginAsAdmin()->post('/users', [
+            'name' => 'test_name',
+            'email' => 'test_email',
+            'password' => 'test_password',
+            'avatar' => UploadedFile::fake()->image('avatar.jpg'),
+        ]);
+
+        $user = User::where('email', 'test_email')->first();
+        $oldFilepath = $user->avatar_path;
+        $response = $this->loginAsAdmin()->put('/users/' . $user->id, [
             'email' => 'edit_' . $user->email,
             'name' => 'edit_' . $user->name,
-        ];
+            'avatar' => UploadedFile::fake()->image('avatar.jpg'),
+        ]);
 
-        $response = $this->loginAsAdmin()->put('/users/' . $user->id, $newData);
+        $this->assertDatabaseHas('users', [
+            'email' => 'edit_' . $user->email,
+            'name' => 'edit_' . $user->name,
+        ]);
 
-        $this->assertDatabaseHas('users', $newData);
+        $user->refresh();
+        $this->assertNotNull($user->avatar_path);
+        Storage::disk()->assertExists($user->avatar_path);
+        Storage::disk()->assertMissing($oldFilepath);
         $response->assertRedirect('/users/' . $user->id);
     }
 
     public function test_admin_can_delete_users()
     {
-        $user = User::factory()->create();
+        Storage::fake();
+        $response = $this->loginAsAdmin()->post('/users', [
+            'name' => 'test_name',
+            'email' => 'test_email',
+            'password' => 'test_password',
+            'avatar' => UploadedFile::fake()->image('avatar.jpg'),
+        ]);
+
+        $user = User::where('email', 'test_email')->first();
         $response = $this->loginAsAdmin()->delete('/users/' . $user->id);
 
         $this->assertModelExists($user);
         $this->assertSoftDeleted($user);
+        Storage::disk()->assertMissing($user->avatar_path);
         $response->assertRedirect('/users');
     }
 
