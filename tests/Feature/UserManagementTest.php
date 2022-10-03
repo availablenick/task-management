@@ -27,6 +27,72 @@ class UserManagementTest extends TestCase
         $response->assertStatus(200);
     }
 
+    public function test_user_cannot_be_created_without_name()
+    {
+        $response = $this->loginAsAdmin()->post('/users');
+
+        $response->assertInvalid(['name']);
+    }
+
+    public function test_user_cannot_be_created_without_email()
+    {
+        $response = $this->loginAsAdmin()->post('/users');
+
+        $response->assertInvalid(['email']);
+    }
+
+    public function test_user_cannot_be_created_with_invalid_email()
+    {
+        $response = $this->loginAsAdmin()->post('/users', ['email' => 'test']);
+
+        $response->assertInvalid(['email']);
+    }
+
+    public function test_user_cannot_be_created_without_password()
+    {
+        $response = $this->loginAsAdmin()->post('/users');
+
+        $response->assertInvalid(['password']);
+    }
+
+    public function test_user_cannot_be_created_with_invalid_password_length()
+    {
+        $response = $this->loginAsAdmin()->post('/users', [
+            'password' => '1234567',
+        ]);
+
+        $response->assertInvalid(['password']);
+    }
+
+    public function test_user_cannot_be_created_without_password_confirmation()
+    {
+        $response = $this->loginAsAdmin()->post('/users', [
+            'password' => 'test_password',
+        ]);
+
+        $response->assertInvalid(['password']);
+    }
+
+    public function test_user_cannot_be_created_with_wrong_password_confirmation()
+    {
+        $response = $this->loginAsAdmin()->post('/users', [
+            'password' => 'test_password',
+            'password_confirmation' => 'test',
+        ]);
+
+        $response->assertInvalid(['password']);
+    }
+
+    public function test_user_cannot_be_updated_with_invalid_email()
+    {
+        $user = User::factory()->create();
+        $response = $this->loginAsAdmin()->put('/users/' . $user->id, [
+            'email' => 'test_email',
+        ]);
+
+        $response->assertInvalid(['email']);
+    }
+
     public function test_guest_cannot_access_creation_page()
     {
         $response = $this->get('/users/create');
@@ -46,13 +112,13 @@ class UserManagementTest extends TestCase
     {
         $response = $this->post('/users', [
             'name' => 'test_name',
-            'email' => 'test_email',
+            'email' => 'test@test.com',
             'password' => 'test_password',
         ]);
 
         $this->assertDatabaseMissing('users', [
             'name' => 'test_name',
-            'email' => 'test_email',
+            'email' => 'test@test.com',
         ]);
 
         $response->assertRedirect('/login');
@@ -115,13 +181,13 @@ class UserManagementTest extends TestCase
         $user = User::factory()->create();
         $response = $this->actingAs($user)->post('/users', [
             'name' => 'test_name',
-            'email' => 'test_email',
+            'email' => 'test@test.com',
             'password' => 'test_password',
         ]);
 
         $this->assertDatabaseMissing('users', [
             'name' => 'test_name',
-            'email' => 'test_email',
+            'email' => 'test@test.com',
         ]);
 
         $response->assertRedirect('/unauthorized');
@@ -200,17 +266,18 @@ class UserManagementTest extends TestCase
         Storage::fake();
         $response = $this->loginAsAdmin()->post('/users', [
             'name' => 'test_name',
-            'email' => 'test_email',
+            'email' => 'test@test.com',
             'password' => 'test_password',
+            'password_confirmation' => 'test_password',
             'avatar' => UploadedFile::fake()->image('avatar.jpg'),
         ]);
 
         $this->assertDatabaseHas('users', [
             'name' => 'test_name',
-            'email' => 'test_email',
+            'email' => 'test@test.com',
         ]);
 
-        $user = User::where('email', 'test_email')->first();
+        $user = User::where('email', 'test@test.com')->first();
         $this->assertNotNull($user->avatar_path);
         Storage::disk()->assertExists($user->avatar_path);
         $response->assertRedirect('/users/' . $user->id);
@@ -221,12 +288,13 @@ class UserManagementTest extends TestCase
         Storage::fake();
         $response = $this->loginAsAdmin()->post('/users', [
             'name' => 'test_name',
-            'email' => 'test_email',
+            'email' => 'test@test.com',
             'password' => 'test_password',
+            'password_confirmation' => 'test_password',
             'avatar' => UploadedFile::fake()->image('avatar.jpg'),
         ]);
 
-        $user = User::where('email', 'test_email')->first();
+        $user = User::where('email', 'test@test.com')->first();
         $oldFilepath = $user->avatar_path;
         $response = $this->loginAsAdmin()->put('/users/' . $user->id, [
             'email' => 'edit_' . $user->email,
@@ -251,12 +319,13 @@ class UserManagementTest extends TestCase
         Storage::fake();
         $response = $this->loginAsAdmin()->post('/users', [
             'name' => 'test_name',
-            'email' => 'test_email',
+            'email' => 'test@test.com',
             'password' => 'test_password',
+            'password_confirmation' => 'test_password',
             'avatar' => UploadedFile::fake()->image('avatar.jpg'),
         ]);
 
-        $user = User::where('email', 'test_email')->first();
+        $user = User::where('email', 'test@test.com')->first();
         $response = $this->loginAsAdmin()->delete('/users/' . $user->id);
 
         $this->assertModelExists($user);

@@ -49,17 +49,17 @@ class UserController extends Controller
             return redirect()->route('unauthorized');
         }
 
-        $data = [
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => $request->password,
-        ];
+        $validated = $request->validate([
+            'name' => 'required',
+            'email' => 'required|email',
+            'password' => 'required|min:8|confirmed',
+        ]);
 
         if ($request->hasFile('avatar')) {
-            $data['avatar_path'] = $request->file('avatar')->store('avatars');
+            $validated['avatar_path'] = $request->file('avatar')->store('avatars');
         }
 
-        $user = User::create($data);
+        $user = User::create($validated);
         return redirect()->route('users.show', $user);
     }
 
@@ -100,17 +100,17 @@ class UserController extends Controller
             return redirect()->route('unauthorized');
         }
 
-        $data = $request->only('name', 'email');
-        if ($request->has('password')) {
-            $data['password'] = $request->password;
-        }
+        $validated = $request->validate([
+            'name' => 'nullable',
+            'email' => 'email',
+        ]);
 
         if ($request->hasFile('avatar')) {
-            $data['avatar_path'] = $request->file('avatar')->store('avatars');
+            $validated['avatar_path'] = $request->file('avatar')->store('avatars');
         }
 
         Storage::disk()->delete($user->avatar_path);
-        $user->update($data);
+        $user->update($validated);
         return redirect()->route('users.show', $user);
     }
 
