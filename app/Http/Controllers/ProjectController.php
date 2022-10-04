@@ -48,14 +48,19 @@ class ProjectController extends Controller
             return redirect()->route('unauthorized');
         }
 
-        $project = new Project();
-        $project->title = $request->title;
-        $project->description = $request->description;
-        $project->deadline = $request->deadline;
-        $project->status = $request->status;
-        $project->client_id = Client::where('company', $request->company)->first()->id;
-        $project->user_id = User::where('email', $request->user_email)->first()->id;
-        $project->save();
+        $validated = $request->validate([
+            'title' => 'required',
+            'description' => 'nullable',
+            'deadline' => 'required|date',
+            'status' => 'in:0,1',
+            'company' => 'required',
+            'user_email' => 'required',
+        ]);
+
+        $validated['client_id'] = Client::where('company', $validated['company'])->first()->id;
+        $validated['user_id'] = User::where('email', $validated['user_email'])->first()->id;
+        unset($validated['company'], $validated['user_email']);
+        $project = Project::create($validated);
         return redirect()->route('projects.show', $project);
     }
 
@@ -96,13 +101,25 @@ class ProjectController extends Controller
             return redirect()->route('unauthorized');
         }
 
-        $project->title = $request->title;
-        $project->description = $request->description;
-        $project->deadline = $request->deadline;
-        $project->status = $request->status;
-        $project->client_id = Client::where('company', $request->company)->first()->id;
-        $project->user_id = User::where('email', $request->user_email)->first()->id;
-        $project->save();
+        $validated = $request->validate([
+            'title' => 'nullable',
+            'description' => 'nullable',
+            'deadline' => 'date',
+            'status' => 'in:0,1',
+            'company' => 'nullable',
+            'user_email' => 'nullable',
+        ]);
+
+        if ($request->has('company')) {
+            $validated['client_id'] = Client::where('company', $validated['company'])->first()->id;
+        }
+        
+        if ($request->has('user_email')) {
+            $validated['user_id'] = User::where('email', $validated['user_email'])->first()->id;
+        }
+        
+        unset($validated['company'], $validated['user_email']);
+        $project->update($validated);
         return redirect()->route('projects.show', $project);
     }
 

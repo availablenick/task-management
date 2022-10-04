@@ -31,6 +31,80 @@ class ProjectManagementTest extends TestCase
         $response->assertStatus(200);
     }
 
+    public function test_project_cannot_be_created_without_title()
+    {
+        $response = $this->login(true)->post('/projects');
+
+        $response->assertInvalid(['title']);
+    }
+
+    public function test_project_cannot_be_created_without_deadline()
+    {
+        $response = $this->login(true)->post('/projects');
+
+        $response->assertInvalid(['deadline']);
+    }
+
+    public function test_project_cannot_be_created_with_misformatted_deadline()
+    {
+        $response = $this->login(true)->post('/projects', [
+            'deadline' => '2001 01 01',
+        ]);
+
+        $response->assertInvalid(['deadline']);
+    }
+
+    public function test_project_cannot_be_created_with_invalid_status_number()
+    {
+        $response = $this->login(true)->post('/projects', [
+            'status' => '2',
+        ]);
+
+        $response->assertInvalid(['status']);
+    }
+
+    public function test_project_cannot_be_created_without_company()
+    {
+        $response = $this->login(true)->post('/projects');
+
+        $response->assertInvalid(['company']);
+    }
+
+    public function test_project_cannot_be_created_without_user_email()
+    {
+        $response = $this->login(true)->post('/projects');
+
+        $response->assertInvalid(['user_email']);
+    }
+
+    public function test_project_cannot_be_updated_with_misformatted_deadline()
+    {
+        $project = Project::factory()
+            ->for(Client::factory())
+            ->for(User::factory())
+            ->create();
+
+        $response = $this->login(true)->put('/projects/' . $project->id, [
+            'deadline' => '2001 01 01',
+        ]);
+
+        $response->assertInvalid(['deadline']);
+    }
+
+    public function test_project_cannot_be_updated_with_invalid_status_number()
+    {
+        $project = Project::factory()
+            ->for(Client::factory())
+            ->for(User::factory())
+            ->create();
+
+        $response = $this->login(true)->put('/projects/' . $project->id, [
+            'status' => '2',
+        ]);
+
+        $response->assertInvalid(['status']);
+    }
+
     public function test_guest_cannot_access_creation_page()
     {
         $response = $this->get('/projects/create');
@@ -326,6 +400,76 @@ class ProjectManagementTest extends TestCase
         $this->assertNull($user1->projects()->where('title', $title)->first());
         $this->assertNotNull($client2->projects()->where('title', $title)->first());
         $this->assertNotNull($user2->projects()->where('title', $title)->first());
+        $response->assertRedirect('/projects/'  . $project->id);
+    }
+
+    public function test_admin_can_edit_projects_without_updating_client()
+    {
+        $client = Client::factory()->create();
+        $user1 = User::factory()->create();
+        $user2 = User::factory()->create();
+        $project = Project::factory()
+            ->for($client)
+            ->for($user1)
+            ->closed()
+            ->create();
+
+        $response = $this->login(true)->put('/projects/' . $project->id, [
+            'title' => 'edit_' . $project->title,
+            'description' => 'edit_' . $project->description,
+            'deadline' => '2000-01-01',
+            'status' => Project::OPEN_STATUS,
+            'user_email' => $user2->email,
+        ]);
+
+        $this->assertDatabaseHas('projects', [
+            'title' => 'edit_' . $project->title,
+            'description' => 'edit_' . $project->description,
+            'deadline' => '2000-01-01',
+            'status' => Project::OPEN_STATUS,
+            'client_id' => $client->id,
+            'user_id' => $user2->id,
+        ]);
+
+        $title = 'edit_' . $project->title;
+        $this->assertNotNull($client->projects()->where('title', $title)->first());
+        $this->assertNull($user1->projects()->where('title', $title)->first());
+        $this->assertNotNull($user2->projects()->where('title', $title)->first());
+        $response->assertRedirect('/projects/'  . $project->id);
+    }
+
+    public function test_admin_can_edit_projects_without_updating_user()
+    {
+        $client1 = Client::factory()->create();
+        $client2 = Client::factory()->create();
+        $user = User::factory()->create();
+        $project = Project::factory()
+            ->for($client1)
+            ->for($user)
+            ->closed()
+            ->create();
+
+        $response = $this->login(true)->put('/projects/' . $project->id, [
+            'title' => 'edit_' . $project->title,
+            'description' => 'edit_' . $project->description,
+            'deadline' => '2000-01-01',
+            'status' => Project::OPEN_STATUS,
+            'company' => $client2->company,
+        ]);
+
+        $this->assertDatabaseHas('projects', [
+            'title' => 'edit_' . $project->title,
+            'description' => 'edit_' . $project->description,
+            'deadline' => '2000-01-01',
+            'status' => Project::OPEN_STATUS,
+            'client_id' => $client2->id,
+            'user_id' => $user->id,
+        ]);
+
+        $title = 'edit_' . $project->title;
+        $this->assertNull($client1->projects()->where('title', $title)->first());
+        $this->assertNotNull($user->projects()->where('title', $title)->first());
+        $this->assertNotNull($client2->projects()->where('title', $title)->first());
         $response->assertRedirect('/projects/'  . $project->id);
     }
 
