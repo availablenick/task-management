@@ -15,7 +15,7 @@ class TaskManagementTest extends TestCase
 
     public function test_task_page_can_be_rendered()
     {
-        $response = $this->get('/tasks');
+        $response = $this->get(route('tasks.index'));
 
         $response->assertStatus(200);
     }
@@ -28,30 +28,30 @@ class TaskManagementTest extends TestCase
             ->create();
 
         $task = Task::factory()->for($project)->create();
-        $response = $this->get('/tasks');
+        $response = $this->get(route('tasks.index'));
 
         $response->assertStatus(200);
     }
 
     public function test_task_cannot_be_created_without_title()
     {
-        $response = $this->login()->post('/tasks');
+        $response = $this->login()->post(route('tasks.store'));
 
         $response->assertInvalid(['title']);
     }
 
     public function test_task_cannot_be_created_without_project_title()
     {
-        $response = $this->login()->post('/tasks');
+        $response = $this->login()->post(route('tasks.store'));
 
         $response->assertInvalid(['project_title']);
     }
 
     public function test_guest_cannot_access_creation_page()
     {
-        $response = $this->get('/tasks/create');
+        $response = $this->get(route('tasks.create'));
 
-        $response->assertRedirect('/login');
+        $response->assertRedirect(route('login'));
     }
 
     public function test_guest_cannot_access_edit_page()
@@ -66,9 +66,9 @@ class TaskManagementTest extends TestCase
             ->create();
 
         $task = Task::factory()->for($project1)->create();
-        $response = $this->get('/tasks/' . $task->id . '/edit');
+        $response = $this->get(route('tasks.edit', $task));
 
-        $response->assertRedirect('/login');
+        $response->assertRedirect(route('login'));
     }
 
     public function test_guest_cannot_create_tasks()
@@ -78,7 +78,7 @@ class TaskManagementTest extends TestCase
             ->for(User::factory())
             ->create();
 
-        $response = $this->post('/tasks', [
+        $response = $this->post(route('tasks.store'), [
             'title' => 'test_title',
             'description' => 'test_description',
             'project_title' => $project->title,
@@ -91,7 +91,7 @@ class TaskManagementTest extends TestCase
         ]);
 
         $this->assertNull($project->tasks()->where('title', 'test_title')->first());
-        $response->assertRedirect('/login');
+        $response->assertRedirect(route('login'));
     }
 
     public function test_guest_cannot_edit_tasks()
@@ -106,7 +106,7 @@ class TaskManagementTest extends TestCase
             ->create();
 
         $task = Task::factory()->for($project1)->create();
-        $response = $this->put('/tasks/' . $task->id, [
+        $response = $this->put(route('tasks.update', $task), [
             'title' => 'edit_' . $task->title,
             'description' => 'edit_' . $task->description,
             'project_title' => $project2->title,
@@ -126,7 +126,7 @@ class TaskManagementTest extends TestCase
 
         $this->assertNotNull($project1->tasks()->where('title', $task->title)->first());
         $this->assertNull($project2->tasks()->where('title', $task->title)->first());
-        $response->assertRedirect('/login');
+        $response->assertRedirect(route('login'));
     }
 
     public function test_guest_cannot_destroy_tasks()
@@ -140,11 +140,11 @@ class TaskManagementTest extends TestCase
             ->for($project)
             ->state(['title' => 'test_title'])
             ->create();
-        $response = $this->delete('/tasks/' . $task->id);
+        $response = $this->delete(route('tasks.destroy', $task));
 
         $this->assertModelExists($task);
         $this->assertNotNull($project->tasks()->where('title', 'test_title')->first());
-        $response->assertRedirect('/login');
+        $response->assertRedirect(route('login'));
     }
 
     public function test_non_assigned_user_cannot_create_tasks()
@@ -156,7 +156,7 @@ class TaskManagementTest extends TestCase
             ->for($user1)
             ->create();
 
-        $response = $this->actingAs($user2)->post('/tasks', [
+        $response = $this->actingAs($user2)->post(route('tasks.store'), [
             'title' => 'test_title',
             'description' => 'test_description',
             'project_title' => $project->title,
@@ -169,7 +169,7 @@ class TaskManagementTest extends TestCase
         ]);
 
         $this->assertNull($project->tasks()->where('title', 'test_title')->first());
-        $response->assertRedirect('/unauthorized');
+        $response->assertRedirect(route('unauthorized'));
     }
 
     public function test_non_assigned_user_cannot_edit_tasks()
@@ -180,7 +180,7 @@ class TaskManagementTest extends TestCase
             ->create();
 
         $task = Task::factory()->for($project)->create();
-        $response = $this->login()->put('/tasks/' . $task->id, [
+        $response = $this->login()->put(route('tasks.update', $task), [
             'title' => 'edit_' . $task->title,
             'description' => 'edit_' . $task->description,
         ]);
@@ -191,7 +191,7 @@ class TaskManagementTest extends TestCase
         ]);
 
         $this->assertNull($project->tasks()->where('title', 'edit_' . $task->title)->first());
-        $response->assertRedirect('/unauthorized');
+        $response->assertRedirect(route('unauthorized'));
     }
 
     public function test_non_assigned_user_cannot_delete_tasks()
@@ -205,11 +205,11 @@ class TaskManagementTest extends TestCase
             ->for($project)
             ->state(['title' => 'test_title'])
             ->create();
-        $response = $this->login()->delete('/tasks/' . $task->id);
+        $response = $this->login()->delete(route('tasks.destroy', $task));
 
         $this->assertModelExists($task);
         $this->assertNotNull($project->tasks()->where('title', 'test_title')->first());
-        $response->assertRedirect('/unauthorized');
+        $response->assertRedirect(route('unauthorized'));
     }
 
     public function test_assigned_user_can_create_tasks()
@@ -220,7 +220,7 @@ class TaskManagementTest extends TestCase
             ->for($user)
             ->create();
 
-        $response = $this->actingAs($user)->post('/tasks', [
+        $response = $this->actingAs($user)->post(route('tasks.store'), [
             'title' => 'test_title',
             'description' => 'test_description',
             'project_title' => $project->title,
@@ -235,7 +235,7 @@ class TaskManagementTest extends TestCase
         $task = Task::where('title', 'test_title')->first();
         $this->assertEquals($project->title, $task->project->title);
         $this->assertNotNull($project->tasks()->where('title', 'test_title')->first());
-        $response->assertRedirect('/tasks/' . $task->id);
+        $response->assertRedirect(route('tasks.show', $task));
     }
 
     public function test_assigned_user_can_edit_tasks()
@@ -247,7 +247,7 @@ class TaskManagementTest extends TestCase
             ->create();
 
         $task = Task::factory()->for($project)->create();
-        $response = $this->actingAs($user)->put('/tasks/' . $task->id, [
+        $response = $this->actingAs($user)->put(route('tasks.update', $task), [
             'title' => 'edit_' . $task->title,
             'description' => 'edit_' . $task->description,
         ]);
@@ -258,7 +258,7 @@ class TaskManagementTest extends TestCase
         ]);
 
         $this->assertNotNull($project->tasks()->where('title', 'edit_' . $task->title)->first());
-        $response->assertRedirect('/tasks/' . $task->id);
+        $response->assertRedirect(route('tasks.show', $task));
     }
 
     public function test_assigned_user_can_delete_tasks()
@@ -273,11 +273,11 @@ class TaskManagementTest extends TestCase
             ->for($project)
             ->state(['title' => 'test_title'])
             ->create();
-        $response = $this->actingAs($user)->delete('/tasks/' . $task->id);
+        $response = $this->actingAs($user)->delete(route('tasks.destroy', $task));
 
         $this->assertModelMissing($task);
         $this->assertNull($project->tasks()->where('title', 'test_title')->first());
-        $response->assertRedirect('/tasks');
+        $response->assertRedirect(route('tasks.index'));
     }
 
     /*
