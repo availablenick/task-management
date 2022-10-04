@@ -14,7 +14,7 @@ class ProjectManagementTest extends TestCase
 
     public function test_project_page_can_be_rendered()
     {
-        $response = $this->get('/projects');
+        $response = $this->get(route('projects.index'));
 
         $response->assertStatus(200);
     }
@@ -26,28 +26,28 @@ class ProjectManagementTest extends TestCase
             ->for(User::factory())
             ->create();
 
-        $response = $this->get('/projects/' . $project->id);
+        $response = $this->get(route('projects.show', $project));
 
         $response->assertStatus(200);
     }
 
     public function test_project_cannot_be_created_without_title()
     {
-        $response = $this->login(true)->post('/projects');
+        $response = $this->login(true)->post(route('projects.store'));
 
         $response->assertInvalid(['title']);
     }
 
     public function test_project_cannot_be_created_without_deadline()
     {
-        $response = $this->login(true)->post('/projects');
+        $response = $this->login(true)->post(route('projects.store'));
 
         $response->assertInvalid(['deadline']);
     }
 
     public function test_project_cannot_be_created_with_misformatted_deadline()
     {
-        $response = $this->login(true)->post('/projects', [
+        $response = $this->login(true)->post(route('projects.store'), [
             'deadline' => '2001 01 01',
         ]);
 
@@ -56,7 +56,7 @@ class ProjectManagementTest extends TestCase
 
     public function test_project_cannot_be_created_with_invalid_status_number()
     {
-        $response = $this->login(true)->post('/projects', [
+        $response = $this->login(true)->post(route('projects.store'), [
             'status' => '2',
         ]);
 
@@ -65,14 +65,14 @@ class ProjectManagementTest extends TestCase
 
     public function test_project_cannot_be_created_without_company()
     {
-        $response = $this->login(true)->post('/projects');
+        $response = $this->login(true)->post(route('projects.store'));
 
         $response->assertInvalid(['company']);
     }
 
     public function test_project_cannot_be_created_without_user_email()
     {
-        $response = $this->login(true)->post('/projects');
+        $response = $this->login(true)->post(route('projects.store'));
 
         $response->assertInvalid(['user_email']);
     }
@@ -84,7 +84,7 @@ class ProjectManagementTest extends TestCase
             ->for(User::factory())
             ->create();
 
-        $response = $this->login(true)->put('/projects/' . $project->id, [
+        $response = $this->login(true)->put(route('projects.update', $project), [
             'deadline' => '2001 01 01',
         ]);
 
@@ -98,7 +98,7 @@ class ProjectManagementTest extends TestCase
             ->for(User::factory())
             ->create();
 
-        $response = $this->login(true)->put('/projects/' . $project->id, [
+        $response = $this->login(true)->put(route('projects.update', $project), [
             'status' => '2',
         ]);
 
@@ -107,9 +107,9 @@ class ProjectManagementTest extends TestCase
 
     public function test_guest_cannot_access_creation_page()
     {
-        $response = $this->get('/projects/create');
+        $response = $this->get(route('projects.create'));
 
-        $response->assertRedirect('/login');
+        $response->assertRedirect(route('login'));
     }
 
     public function test_guest_cannot_access_edit_page()
@@ -119,16 +119,16 @@ class ProjectManagementTest extends TestCase
             ->for(User::factory())
             ->create();
 
-        $response = $this->get('/projects/' . $project->id . '/edit');
+        $response = $this->get(route('projects.edit', $project));
 
-        $response->assertRedirect('/login');
+        $response->assertRedirect(route('login'));
     }
 
     public function test_guest_cannot_create_projects()
     {
         $client = Client::factory()->create();
         $user = User::factory()->create();
-        $response = $this->post('/projects', [
+        $response = $this->post(route('projects.store'), [
             'title' => 'test_title',
             'description' => 'test_description',
             'deadline' => '2000-01-01',
@@ -148,7 +148,7 @@ class ProjectManagementTest extends TestCase
 
         $this->assertNull($client->projects()->where('title', 'test_title')->first());
         $this->assertNull($user->projects()->where('title', 'test_title')->first());
-        $response->assertRedirect('/login');
+        $response->assertRedirect(route('login'));
     }
 
     public function test_guest_cannot_edit_projects()
@@ -163,7 +163,7 @@ class ProjectManagementTest extends TestCase
             ->closed()
             ->create();
 
-        $response = $this->put('/projects/' . $project->id, [
+        $response = $this->put(route('projects.update', $project), [
             'title' => 'edit_' . $project->title,
             'description' => 'edit_' . $project->description,
             'deadline' => '2000-01-01',
@@ -194,7 +194,7 @@ class ProjectManagementTest extends TestCase
         $this->assertNotNull($user1->projects()->where('title', $project->title)->first());
         $this->assertNull($client2->projects()->where('title', $project->title)->first());
         $this->assertNull($user2->projects()->where('title', $project->title)->first());
-        $response->assertRedirect('/login');
+        $response->assertRedirect(route('login'));
     }
 
     public function test_guest_cannot_delete_projects()
@@ -207,19 +207,19 @@ class ProjectManagementTest extends TestCase
             ->state(['title' => 'test_title'])
             ->create();
 
-        $response = $this->delete('/projects/' . $project->id);
+        $response = $this->delete(route('projects.destroy', $project));
 
         $this->assertModelExists($project);
         $this->assertNotNull($client->projects()->where('title', 'test_title')->first());
         $this->assertNotNull($user->projects()->where('title', 'test_title')->first());
-        $response->assertRedirect('/login');
+        $response->assertRedirect(route('login'));
     }
 
     public function test_non_admin_user_cannot_access_creation_page()
     {
-        $response = $this->login()->get('/projects/create');
+        $response = $this->login()->get(route('projects.create'));
 
-        $response->assertRedirect('/unauthorized');
+        $response->assertRedirect(route('unauthorized'));
     }
 
     public function test_non_admin_user_cannot_access_edit_page()
@@ -229,16 +229,16 @@ class ProjectManagementTest extends TestCase
             ->for(User::factory())
             ->create();
 
-        $response = $this->login()->get('/projects/' . $project->id . '/edit');
+        $response = $this->login()->get(route('projects.edit', $project));
 
-        $response->assertRedirect('/unauthorized');
+        $response->assertRedirect(route('unauthorized'));
     }    
 
     public function test_non_admin_user_cannot_create_projects()
     {
         $client = Client::factory()->create();
         $user = User::factory()->create();
-        $response = $this->login()->post('/projects', [
+        $response = $this->login()->post(route('projects.store'), [
             'title' => 'test_title',
             'description' => 'test_description',
             'deadline' => '2000-01-01',
@@ -258,7 +258,7 @@ class ProjectManagementTest extends TestCase
 
         $this->assertNull($client->projects()->where('title', 'test_title')->first());
         $this->assertNull($user->projects()->where('title', 'test_title')->first());
-        $response->assertRedirect('/unauthorized');
+        $response->assertRedirect(route('unauthorized'));
     }
 
     public function test_non_admin_user_cannot_edit_projects()
@@ -273,7 +273,7 @@ class ProjectManagementTest extends TestCase
             ->closed()
             ->create();
 
-        $response = $this->login()->put('/projects/' . $project->id, [
+        $response = $this->login()->put(route('projects.update', $project), [
             'title' => 'edit_' . $project->title,
             'description' => 'edit_' . $project->description,
             'deadline' => '2000-01-01',
@@ -297,7 +297,7 @@ class ProjectManagementTest extends TestCase
         $this->assertNotNull($user1->projects()->where('title', $title)->first());
         $this->assertNull($client2->projects()->where('title', $title)->first());
         $this->assertNull($user2->projects()->where('title', $title)->first());
-        $response->assertRedirect('/unauthorized');
+        $response->assertRedirect(route('unauthorized'));
     }
 
     public function test_non_admin_user_cannot_delete_projects()
@@ -310,17 +310,17 @@ class ProjectManagementTest extends TestCase
             ->state(['title' => 'test_title'])
             ->create();
 
-        $response = $this->login()->delete('/projects/' . $project->id);
+        $response = $this->login()->delete(route('projects.destroy', $project));
 
         $this->assertModelExists($project);
         $this->assertNotNull($client->projects()->where('title', 'test_title')->first());
         $this->assertNotNull($user->projects()->where('title', 'test_title')->first());
-        $response->assertRedirect('/unauthorized');
+        $response->assertRedirect(route('unauthorized'));
     }
 
     public function test_admin_can_access_creation_page()
     {
-        $response = $this->login(true)->get('/projects/create');
+        $response = $this->login(true)->get(route('projects.create'));
 
         $response->assertStatus(200);
     }
@@ -332,7 +332,7 @@ class ProjectManagementTest extends TestCase
             ->for(User::factory())
             ->create();
 
-        $response = $this->login(true)->get('/projects/' . $project->id . '/edit');
+        $response = $this->login(true)->get(route('projects.edit', $project));
 
         $response->assertStatus(200);
     }    
@@ -341,7 +341,7 @@ class ProjectManagementTest extends TestCase
     {
         $client = Client::factory()->create();
         $user = User::factory()->create();
-        $response = $this->login(true)->post('/projects', [
+        $response = $this->login(true)->post(route('projects.store'), [
             'title' => 'test_title',
             'description' => 'test_description',
             'deadline' => '2000-01-01',
@@ -362,7 +362,7 @@ class ProjectManagementTest extends TestCase
         $this->assertNotNull($client->projects()->where('title', 'test_title')->first());
         $this->assertNotNull($user->projects()->where('title', 'test_title')->first());
         $project = Project::where('title', 'test_title')->first();
-        $response->assertRedirect('/projects/'  . $project->id);
+        $response->assertRedirect(route('projects.show', $project));
     }
 
     public function test_admin_can_edit_projects()
@@ -377,7 +377,7 @@ class ProjectManagementTest extends TestCase
             ->closed()
             ->create();
 
-        $response = $this->login(true)->put('/projects/' . $project->id, [
+        $response = $this->login(true)->put(route('projects.update', $project), [
             'title' => 'edit_' . $project->title,
             'description' => 'edit_' . $project->description,
             'deadline' => '2000-01-01',
@@ -400,7 +400,7 @@ class ProjectManagementTest extends TestCase
         $this->assertNull($user1->projects()->where('title', $title)->first());
         $this->assertNotNull($client2->projects()->where('title', $title)->first());
         $this->assertNotNull($user2->projects()->where('title', $title)->first());
-        $response->assertRedirect('/projects/'  . $project->id);
+        $response->assertRedirect(route('projects.show', $project));
     }
 
     public function test_admin_can_edit_projects_without_updating_client()
@@ -414,7 +414,7 @@ class ProjectManagementTest extends TestCase
             ->closed()
             ->create();
 
-        $response = $this->login(true)->put('/projects/' . $project->id, [
+        $response = $this->login(true)->put(route('projects.update', $project), [
             'title' => 'edit_' . $project->title,
             'description' => 'edit_' . $project->description,
             'deadline' => '2000-01-01',
@@ -435,7 +435,7 @@ class ProjectManagementTest extends TestCase
         $this->assertNotNull($client->projects()->where('title', $title)->first());
         $this->assertNull($user1->projects()->where('title', $title)->first());
         $this->assertNotNull($user2->projects()->where('title', $title)->first());
-        $response->assertRedirect('/projects/'  . $project->id);
+        $response->assertRedirect(route('projects.show', $project));
     }
 
     public function test_admin_can_edit_projects_without_updating_user()
@@ -449,7 +449,7 @@ class ProjectManagementTest extends TestCase
             ->closed()
             ->create();
 
-        $response = $this->login(true)->put('/projects/' . $project->id, [
+        $response = $this->login(true)->put(route('projects.update', $project), [
             'title' => 'edit_' . $project->title,
             'description' => 'edit_' . $project->description,
             'deadline' => '2000-01-01',
@@ -470,7 +470,7 @@ class ProjectManagementTest extends TestCase
         $this->assertNull($client1->projects()->where('title', $title)->first());
         $this->assertNotNull($user->projects()->where('title', $title)->first());
         $this->assertNotNull($client2->projects()->where('title', $title)->first());
-        $response->assertRedirect('/projects/'  . $project->id);
+        $response->assertRedirect(route('projects.show', $project));
     }
 
     public function test_admin_can_delete_projects()
@@ -483,12 +483,12 @@ class ProjectManagementTest extends TestCase
             ->state(['title' => 'test_title'])
             ->create();
 
-        $response = $this->login(true)->delete('/projects/' . $project->id);
+        $response = $this->login(true)->delete(route('projects.destroy', $project));
 
         $this->assertModelMissing($project);
         $this->assertNull($client->projects()->where('title', 'test_title')->first());
         $this->assertNull($user->projects()->where('title', 'test_title')->first());
-        $response->assertRedirect('/projects');
+        $response->assertRedirect(route('projects.index'));
     }
 
     /*
