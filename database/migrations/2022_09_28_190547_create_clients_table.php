@@ -18,7 +18,7 @@ class CreateClientsTable extends Migration
             $table->string('company')->unique();
             $table->integer('vat');
             $table->string('address');
-            $table->boolean('is_active');
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
     }

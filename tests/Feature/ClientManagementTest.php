@@ -26,6 +26,65 @@ class ClientManagementTest extends TestCase
 		$response->assertStatus(200);
 	}
 
+	public function test_client_cannot_be_created_without_company()
+	{
+		$response = $this->login(true)->post('/clients');
+		
+		$response->assertInvalid(['company']);
+	}
+
+	public function test_client_cannot_be_created_without_vat()
+	{
+		$response = $this->login(true)->post('/clients');
+		
+		$response->assertInvalid(['vat']);
+	}
+
+	public function test_client_cannot_be_created_with_non_integer_vat()
+	{
+		$response = $this->login(true)->post('/clients', [
+			'vat' => '1.5',
+		]);
+
+		$response->assertInvalid(['vat']);
+	}
+
+	public function test_client_cannot_be_created_without_address()
+	{
+		$response = $this->login(true)->post('/clients');
+
+		$response->assertInvalid(['address']);
+	}
+
+	public function test_client_cannot_be_created_with_non_boolean_active_flag()
+	{
+		$response = $this->login(true)->post('/clients', [
+			'is_active' => 'true',
+		]);
+
+		$response->assertInvalid(['is_active']);
+	}
+
+	public function test_client_cannot_be_updated_with_non_integer_vat()
+	{
+		$client = Client::factory()->create();
+		$response = $this->login(true)->put('/clients/' . $client->id, [
+			'vat' => '1.5',
+		]);
+
+		$response->assertInvalid(['vat']);
+	}
+
+	public function test_client_cannot_be_updated_with_non_boolean_active_flag()
+	{
+		$client = Client::factory()->create();
+		$response = $this->login(true)->put('/clients/' . $client->id, [
+			'is_active' => 'true',
+		]);
+
+		$response->assertInvalid(['is_active']);
+	}
+
 	public function test_guest_cannot_access_creation_page()
 	{
 		$response = $this->get('/clients/create');

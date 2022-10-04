@@ -46,7 +46,14 @@ class ClientController extends Controller
             return redirect()->route('unauthorized');
         }
 
-        $client = Client::create($request->all());
+        $validated = $request->validate([
+            'company' => 'required',
+            'vat' => 'required|integer',
+            'address' => 'required',
+            'is_active' => 'boolean',
+        ]);
+
+        $client = Client::create($validated);
         return redirect()->route('clients.show', $client);
     }
 
@@ -87,7 +94,14 @@ class ClientController extends Controller
             return redirect()->route('unauthorized');
         }
 
-        $client->update($request->all());
+        $validated = $request->validate([
+            'company' => 'nullable',
+            'vat' => 'integer',
+            'address' => 'nullable',
+            'is_active' => 'boolean',
+        ]);
+
+        $client->update($validated);
         return redirect()->route('clients.show', $client);
     }
 
