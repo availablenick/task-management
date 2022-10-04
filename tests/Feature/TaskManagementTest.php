@@ -33,6 +33,20 @@ class TaskManagementTest extends TestCase
         $response->assertStatus(200);
     }
 
+    public function test_task_cannot_be_created_without_title()
+    {
+        $response = $this->login()->post('/tasks');
+
+        $response->assertInvalid(['title']);
+    }
+
+    public function test_task_cannot_be_created_without_project_title()
+    {
+        $response = $this->login()->post('/tasks');
+
+        $response->assertInvalid(['project_title']);
+    }
+
     public function test_guest_cannot_access_creation_page()
     {
         $response = $this->get('/tasks/create');

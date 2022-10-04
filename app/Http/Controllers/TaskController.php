@@ -41,16 +41,20 @@ class TaskController extends Controller
      */
     public function store(Request $request)
     {
-        $project = Project::where('title', $request->project_title)->first();
+        $validated = $request->validate([
+            'title' => 'required',
+            'description' => 'nullable',
+            'project_title' => 'required',
+        ]);
+
+        $project = Project::where('title', $validated['project_title'])->first();
         if ($project->user_id != $request->user()->id) {
             return redirect()->route('unauthorized');
         }
 
-        $task = new Task();
-        $task->title = $request->title;
-        $task->description = $request->description;
-        $task->project_id = $project->id;
-        $task->save();
+        $validated['project_id'] = $project->id;
+        unset($validated['project_title']);
+        $task = Task::create($validated);
         return redirect()->route('tasks.show', $task);
     }
 
