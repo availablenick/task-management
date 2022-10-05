@@ -21,7 +21,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
-})->name('welcome');
+})->middleware('auth')->name('dashboard');
 
 Route::get('/unauthorized', function () {
     return response('Unauthorized access', 200);
