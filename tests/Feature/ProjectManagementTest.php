@@ -219,7 +219,7 @@ class ProjectManagementTest extends TestCase
     {
         $response = $this->login()->get(route('projects.create'));
 
-        $response->assertRedirect(route('unauthorized'));
+        $response->assertStatus(403);
     }
 
     public function test_non_admin_user_cannot_access_edit_page()
@@ -231,7 +231,7 @@ class ProjectManagementTest extends TestCase
 
         $response = $this->login()->get(route('projects.edit', $project));
 
-        $response->assertRedirect(route('unauthorized'));
+        $response->assertStatus(403);
     }    
 
     public function test_non_admin_user_cannot_create_projects()
@@ -258,7 +258,7 @@ class ProjectManagementTest extends TestCase
 
         $this->assertNull($client->projects()->where('title', 'test_title')->first());
         $this->assertNull($user->projects()->where('title', 'test_title')->first());
-        $response->assertRedirect(route('unauthorized'));
+        $response->assertStatus(403);
     }
 
     public function test_non_admin_user_cannot_edit_projects()
@@ -297,7 +297,7 @@ class ProjectManagementTest extends TestCase
         $this->assertNotNull($user1->projects()->where('title', $title)->first());
         $this->assertNull($client2->projects()->where('title', $title)->first());
         $this->assertNull($user2->projects()->where('title', $title)->first());
-        $response->assertRedirect(route('unauthorized'));
+        $response->assertStatus(403);
     }
 
     public function test_non_admin_user_cannot_delete_projects()
@@ -315,7 +315,7 @@ class ProjectManagementTest extends TestCase
         $this->assertModelExists($project);
         $this->assertNotNull($client->projects()->where('title', 'test_title')->first());
         $this->assertNotNull($user->projects()->where('title', 'test_title')->first());
-        $response->assertRedirect(route('unauthorized'));
+        $response->assertStatus(403);
     }
 
     public function test_admin_can_access_creation_page()

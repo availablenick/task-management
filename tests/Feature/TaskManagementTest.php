@@ -169,7 +169,7 @@ class TaskManagementTest extends TestCase
         ]);
 
         $this->assertNull($project->tasks()->where('title', 'test_title')->first());
-        $response->assertRedirect(route('unauthorized'));
+        $response->assertStatus(403);
     }
 
     public function test_non_assigned_user_cannot_edit_tasks()
@@ -191,7 +191,7 @@ class TaskManagementTest extends TestCase
         ]);
 
         $this->assertNull($project->tasks()->where('title', 'edit_' . $task->title)->first());
-        $response->assertRedirect(route('unauthorized'));
+        $response->assertStatus(403);
     }
 
     public function test_non_assigned_user_cannot_delete_tasks()
@@ -209,7 +209,7 @@ class TaskManagementTest extends TestCase
 
         $this->assertModelExists($task);
         $this->assertNotNull($project->tasks()->where('title', 'test_title')->first());
-        $response->assertRedirect(route('unauthorized'));
+        $response->assertStatus(403);
     }
 
     public function test_assigned_user_can_create_tasks()

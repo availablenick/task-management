@@ -158,7 +158,7 @@ class UserManagementTest extends TestCase
         $user = User::factory()->create();
         $response = $this->actingAs($user)->get(route('users.create'));
 
-        $response->assertRedirect(route('unauthorized'));
+        $response->assertStatus(403);
     }
 
     public function test_non_admin_user_cannot_access_another_user_edit_page()
@@ -167,7 +167,7 @@ class UserManagementTest extends TestCase
         $user2 = User::factory()->create();
         $response = $this->actingAs($user2)->get(route('users.edit', $user1));
 
-        $response->assertRedirect(route('unauthorized'));
+        $response->assertStatus(403);
     }
 
     public function test_non_admin_user_can_access_their_edit_page()
@@ -192,7 +192,7 @@ class UserManagementTest extends TestCase
             'email' => 'test@test.com',
         ]);
 
-        $response->assertRedirect(route('unauthorized'));
+        $response->assertStatus(403);
     }
 
     public function test_non_admin_user_cannot_edit_another_user()
@@ -210,7 +210,7 @@ class UserManagementTest extends TestCase
             'email' => 'edit_' . $user1->email,
         ]);
 
-        $response->assertRedirect(route('unauthorized'));
+        $response->assertStatus(403);
     }
 
     public function test_non_admin_user_can_edit_themself()
@@ -235,7 +235,7 @@ class UserManagementTest extends TestCase
 
         $this->assertModelExists($user1);
         $this->assertNotSoftDeleted($user1);
-        $response->assertRedirect(route('unauthorized'));
+        $response->assertStatus(403);
     }
 
     public function test_non_admin_user_can_delete_themself()

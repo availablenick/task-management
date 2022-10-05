@@ -30,7 +30,7 @@ class ClientController extends Controller
     public function create(Request $request)
     {
         if ($request->user()->cannot('create', Client::class)) {
-            return redirect()->route('unauthorized');
+            abort(403);
         }
     }
 
@@ -43,7 +43,7 @@ class ClientController extends Controller
     public function store(Request $request)
     {
         if ($request->user()->cannot('create', Client::class)) {
-            return redirect()->route('unauthorized');
+            abort(403);
         }
 
         $validated = $request->validate([
@@ -77,7 +77,7 @@ class ClientController extends Controller
     public function edit(Request $request, Client $client)
     {
         if ($request->user()->cannot('update', $client)) {
-            return redirect()->route('unauthorized');
+            abort(403);
         }
     }
 
@@ -91,7 +91,7 @@ class ClientController extends Controller
     public function update(Request $request, Client $client)
     {
         if ($request->user()->cannot('update', $client)) {
-            return redirect()->route('unauthorized');
+            abort(403);
         }
 
         $validated = $request->validate([
@@ -114,7 +114,7 @@ class ClientController extends Controller
     public function destroy(Request $request, Client $client)
     {
         if ($request->user()->cannot('delete', $client)) {
-            return redirect()->route('unauthorized');
+            abort(403);
         }
 
         $client->delete();

@@ -33,7 +33,7 @@ class UserController extends Controller
     public function create(Request $request)
     {
         if ($request->user()->cannot('create', User::class)) {
-            return redirect()->route('unauthorized');
+            abort(403);
         }
     }
 
@@ -46,7 +46,7 @@ class UserController extends Controller
     public function store(Request $request)
     {
         if ($request->user()->cannot('create', User::class)) {
-            return redirect()->route('unauthorized');
+            abort(403);
         }
 
         $validated = $request->validate([
@@ -84,7 +84,7 @@ class UserController extends Controller
     public function edit(Request $request, User $user)
     {
         if ($request->user()->cannot('update', $user)) {
-            return redirect()->route('unauthorized');
+            abort(403);
         }
     }
 
@@ -98,7 +98,7 @@ class UserController extends Controller
     public function update(Request $request, User $user)
     {
         if ($request->user()->cannot('update', $user)) {
-            return redirect()->route('unauthorized');
+            abort(403);
         }
 
         $validated = $request->validate([
@@ -124,7 +124,7 @@ class UserController extends Controller
     public function destroy(Request $request, User $user)
     {
         if ($request->user()->cannot('delete', $user)) {
-            return redirect()->route('unauthorized');
+            abort(403);
         }
 
         Storage::disk()->delete($user->avatar_path);

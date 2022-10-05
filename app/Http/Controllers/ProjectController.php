@@ -32,7 +32,7 @@ class ProjectController extends Controller
     public function create(Request $request)
     {
         if ($request->user()->cannot('create', Project::class)) {
-            return redirect()->route('unauthorized');
+            abort(403);
         }
     }
 
@@ -45,7 +45,7 @@ class ProjectController extends Controller
     public function store(Request $request)
     {
         if ($request->user()->cannot('create', Project::class)) {
-            return redirect()->route('unauthorized');
+            abort(403);
         }
 
         $validated = $request->validate([
@@ -84,7 +84,7 @@ class ProjectController extends Controller
     public function edit(Request $request, Project $project)
     {
         if ($request->user()->cannot('update', $project)) {
-            return redirect()->route('unauthorized');
+            abort(403);
         }
     }
 
@@ -98,7 +98,7 @@ class ProjectController extends Controller
     public function update(Request $request, Project $project)
     {
         if ($request->user()->cannot('update', $project)) {
-            return redirect()->route('unauthorized');
+            abort(403);
         }
 
         $validated = $request->validate([
@@ -132,7 +132,7 @@ class ProjectController extends Controller
     public function destroy(Request $request, Project $project)
     {
         if ($request->user()->cannot('delete', $project)) {
-            return redirect()->route('unauthorized');
+            abort(403);
         }
 
         $project->delete();

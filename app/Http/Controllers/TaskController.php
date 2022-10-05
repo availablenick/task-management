@@ -50,7 +50,7 @@ class TaskController extends Controller
 
         $project = Project::where('title', $validated['project_title'])->first();
         if ($project->user_id != $request->user()->id) {
-            return redirect()->route('unauthorized');
+            abort(403);
         }
 
         $validated['project_id'] = $project->id;
@@ -91,7 +91,7 @@ class TaskController extends Controller
     public function update(Request $request, Task $task)
     {
         if ($task->project->user_id != $request->user()->id) {
-            return redirect()->route('unauthorized');
+            abort(403);
         }
 
         $task->update($request->all());
@@ -107,7 +107,7 @@ class TaskController extends Controller
     public function destroy(Request $request, Task $task)
     {
         if ($task->project->user_id != $request->user()->id) {
-            return redirect()->route('unauthorized');
+            abort(403);
         }
 
         $task->delete();

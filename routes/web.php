@@ -23,10 +23,6 @@ Route::get('/', function () {
     return view('welcome');
 })->middleware('auth')->name('dashboard');
 
-Route::get('/unauthorized', function () {
-    return response('Unauthorized access', 200);
-})->name('unauthorized');
-
 Route::controller(EmailVerificationController::class)->group(function () {
     Route::get('/email/verify', 'notice')->middleware('auth')->name('verification.notice');
     Route::get('/email/verify/{id}/{hash}', 'verify')->middleware(['auth', 'signed'])->name('verification.verify');

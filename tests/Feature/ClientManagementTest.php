@@ -148,7 +148,7 @@ class ClientManagementTest extends TestCase
 	{
 		$response = $this->login()->get(route('clients.create'));
 
-		$response->assertRedirect(route('unauthorized'));
+		$response->assertStatus(403);
 	}
 
 	public function test_non_admin_user_cannot_access_edit_page()
@@ -156,7 +156,7 @@ class ClientManagementTest extends TestCase
 		$client = Client::factory()->create();
 		$response = $this->login()->get(route('clients.edit', $client));
 
-		$response->assertRedirect(route('unauthorized'));
+		$response->assertStatus(403);
 	}
 
 	public function test_non_admin_user_cannot_create_clients()
@@ -175,7 +175,7 @@ class ClientManagementTest extends TestCase
 			'is_active' => true,
 		]);
 
-		$response->assertRedirect(route('unauthorized'));
+		$response->assertStatus(403);
 	}
 
 	public function test_non_admin_user_cannot_edit_clients()
@@ -192,7 +192,7 @@ class ClientManagementTest extends TestCase
 
 		$this->assertDatabaseMissing('clients', $newData);
 		$this->assertModelExists($client);
-		$response->assertRedirect(route('unauthorized'));
+		$response->assertStatus(403);
 	}
 
 	public function test_non_admin_user_cannot_delete_clients()
@@ -201,7 +201,7 @@ class ClientManagementTest extends TestCase
 		$response = $this->login()->delete(route('clients.destroy', $client));
 
 		$this->assertModelExists($client);
-		$response->assertRedirect(route('unauthorized'));
+		$response->assertStatus(403);
 	}
 
 	public function test_admin_can_access_creation_page()
