@@ -3,16 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class UserController extends Controller
 {
-    private $filesystemFactory;
-
     public function __construct()
     {
         $this->middleware('auth')->except(['index', 'show']);
+        $this->middleware('verified')->only(['edit', 'update', 'destroy']);
     }
 
     /**
@@ -60,6 +60,7 @@ class UserController extends Controller
         }
 
         $user = User::create($validated);
+        event(new Registered($user));
         return redirect()->route('users.show', $user);
     }
 

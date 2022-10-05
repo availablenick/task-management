@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthenticationController;
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\EmailVerificationController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\UserController;
@@ -25,6 +26,12 @@ Route::get('/', function () {
 Route::get('/unauthorized', function () {
     return response('Unauthorized access', 200);
 })->name('unauthorized');
+
+Route::controller(EmailVerificationController::class)->group(function () {
+    Route::get('/email/verify', 'notice')->middleware('auth')->name('verification.notice');
+    Route::get('/email/verify/{id}/{hash}', 'verify')->middleware(['auth', 'signed'])->name('verification.verify');
+    Route::post('/email/verification-notification', 'send')->middleware('auth')->name('verification.send');
+});
 
 Route::controller(AuthenticationController::class)->group(function () {
     Route::get('/login', 'login')->name('login');

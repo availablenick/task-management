@@ -336,6 +336,33 @@ class UserManagementTest extends TestCase
         $response->assertRedirect(route('users.index'));
     }
 
+    public function test_unverified_non_admin_user_cannot_access_edit_page()
+    {
+        $user = User::factory()->unverified()->create();
+        $response = $this->actingAs($user)->get(route('users.edit', $user));
+
+        $response->assertRedirect(route('verification.notice'));
+    }
+
+    public function test_unverified_non_admin_user_cannot_edit_themself()
+    {
+        $user = User::factory()->unverified()->create();
+        $response = $this->actingAs($user)->put(route('users.update', $user), [
+            'name' => 'edit_' . $user->name,
+            'email' => 'edit_' . $user->email,
+        ]);
+
+        $response->assertRedirect(route('verification.notice'));
+    }
+
+    public function test_unverified_non_admin_user_cannot_delete_themself()
+    {
+        $user = User::factory()->unverified()->create();
+        $response = $this->actingAs($user)->delete(route('users.destroy', $user));
+
+        $response->assertRedirect(route('verification.notice'));
+    }
+
     /*
         Helpers
     */

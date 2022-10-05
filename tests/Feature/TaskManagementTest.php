@@ -280,6 +280,79 @@ class TaskManagementTest extends TestCase
         $response->assertRedirect(route('tasks.index'));
     }
 
+    public function test_unverified_user_cannot_access_creation_page()
+    {
+        $user = User::factory()->unverified()->create();
+        $response = $this->actingAs($user)->get(route('tasks.create'));
+
+        $response->assertRedirect(route('verification.notice'));
+    }
+
+    public function test_unverified_user_cannot_access_edit_page()
+    {
+        $user = User::factory()->unverified()->create();
+        $project = Project::factory()
+            ->for(Client::factory())
+            ->for($user)
+            ->create();
+
+        $task = Task::factory()->for($project)->create();
+        $response = $this->actingAs($user)->get(route('tasks.edit', $task));
+
+        $response->assertRedirect(route('verification.notice'));
+    }
+
+    public function test_unverified_user_cannot_create_tasks()
+    {
+        $user = User::factory()->unverified()->create();
+        $project = Project::factory()
+            ->for(Client::factory())
+            ->for($user)
+            ->create();
+
+        $response = $this->actingAs($user)->post(route('tasks.store'), [
+            'title' => 'test_title',
+            'description' => 'test_description',
+            'project_title' => $project->title,
+        ]);
+
+        $response->assertRedirect(route('verification.notice'));
+    }
+
+    public function test_unverified_user_cannot_edit_tasks()
+    {
+        $user = User::factory()->unverified()->create();
+        $project = Project::factory()
+            ->for(Client::factory())
+            ->for($user)
+            ->create();
+
+        $task = Task::factory()->for($project)->create();
+        $response = $this->actingAs($user)->put(route('tasks.update', $task), [
+            'title' => 'edit_' . $task->title,
+            'description' => 'edit_' . $task->description,
+        ]);
+
+        $response->assertRedirect(route('verification.notice'));
+    }
+
+    public function test_unverified_user_cannot_delete_tasks()
+    {
+        $user = User::factory()->unverified()->create();
+        $project = Project::factory()
+            ->for(Client::factory())
+            ->for($user)
+            ->create();
+
+        $task = Task::factory()
+            ->for($project)
+            ->state(['title' => 'test_title'])
+            ->create();
+        $response = $this->actingAs($user)->delete(route('tasks.destroy', $task));
+
+        $response->assertRedirect(route('verification.notice'));
+    }
+
     /*
         Helpers
     */
