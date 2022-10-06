@@ -19,6 +19,11 @@ RUN docker-php-ext-install pdo_pgsql && \
 	docker-php-ext-install gd && \
 	docker-php-ext-install zip
 
+RUN curl -sL https://deb.nodesource.com/setup_12.x | bash - && \
+    apt-get install -y nodejs
+
+RUN npm install cross-env -g
+
 USER newuser
 RUN	composer global require laravel/installer
 ENV PATH "$PATH:/home/newuser/.composer/vendor/bin"

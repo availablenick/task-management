@@ -9,7 +9,7 @@ class AuthenticationController extends Controller
 {
     public function login()
     {
-
+        return view('auth.login');
     }
 
     public function authenticate(Request $request)
@@ -22,7 +22,7 @@ class AuthenticationController extends Controller
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
 
-            return redirect()->intended();
+            return redirect()->route('dashboard');
         }
     }
 
