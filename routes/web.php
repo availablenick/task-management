@@ -31,8 +31,8 @@ Route::controller(EmailVerificationController::class)->group(function () {
 
 Route::controller(AuthenticationController::class)->group(function () {
     Route::get('/login', 'login')->name('login');
-    Route::post('/login', 'authenticate');
-    Route::post('/logout', 'logout');
+    Route::post('/login', 'authenticate')->name('authenticate');
+    Route::post('/logout', 'logout')->name('logout');
 });
 
 Route::resource('users', UserController::class);

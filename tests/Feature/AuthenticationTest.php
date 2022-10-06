@@ -12,14 +12,14 @@ class AuthenticationTest extends TestCase
 
     public function test_login_page_can_be_rendered()
     {
-        $response = $this->get('/login');
+        $response = $this->get(route('login'));
 
         $response->assertStatus(200);
     }
 
     public function test_user_cannot_login_without_email_or_password()
     {
-        $response = $this->post('/login');
+        $response = $this->post(route('authenticate'));
 
         $response->assertInvalid(['email', 'password']);
     }
@@ -27,7 +27,7 @@ class AuthenticationTest extends TestCase
     public function test_user_can_login()
     {
         $user = User::factory()->create();
-        $response = $this->post('/login', [
+        $response = $this->post(route('authenticate'), [
             'email' => $user->email,
             'password' => 'password',
         ]);
@@ -38,7 +38,7 @@ class AuthenticationTest extends TestCase
     public function test_user_can_logout()
     {
         $user = User::factory()->create();
-        $response = $this->actingAs($user)->post('/logout');
+        $response = $this->actingAs($user)->post(route('logout'));
 
         $this->assertGuest();
     }
