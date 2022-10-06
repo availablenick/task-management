@@ -30,8 +30,8 @@ Route::controller(EmailVerificationController::class)->group(function () {
 });
 
 Route::controller(AuthenticationController::class)->group(function () {
-    Route::get('/login', 'login')->name('login');
-    Route::post('/login', 'authenticate')->name('authenticate');
+    Route::get('/login', 'login')->middleware('guest')->name('login');
+    Route::post('/login', 'authenticate')->middleware('guest')->name('authenticate');
     Route::post('/logout', 'logout')->name('logout');
 });
 
