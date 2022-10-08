@@ -11,5 +11,7 @@
 		<main class="container-fluid h-100">
 			@yield('content')
 		</main>
+
+		<script src="{{ asset('js/app.js') }}"></script>
 	</body>
 </html>

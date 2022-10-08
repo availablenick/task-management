@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthenticationController;
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmailVerificationController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\TaskController;
@@ -19,9 +20,7 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
-    return view('dashboard.dashboard');
-})->middleware('auth')->name('dashboard');
+Route::get('/', DashboardController::class)->middleware('auth')->name('dashboard');
 
 Route::controller(EmailVerificationController::class)->group(function () {
     Route::get('/email/verify', 'notice')->middleware('auth')->name('verification.notice');
