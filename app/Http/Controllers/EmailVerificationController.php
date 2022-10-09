@@ -9,18 +9,20 @@ class EmailVerificationController extends Controller
 {
     public function notice()
     {
-
+        return view('email.notice');
     }
 
     public function verify(EmailVerificationRequest $request)
     {
         $request->fulfill();
      
-        return redirect()->route('welcome');
+        return redirect()->route('dashboard');
     }
 
     public function send(Request $request)
     {
         $request->user()->sendEmailVerificationNotification();
+
+        return back()->with('message', 'Verification link sent!');
     }
 }

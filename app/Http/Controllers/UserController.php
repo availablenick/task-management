@@ -5,13 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 
 class UserController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth')->except(['index', 'show']);
+        $this->middleware('auth');
         $this->middleware('verified')->only(['edit', 'update', 'destroy']);
     }
 
@@ -22,7 +23,8 @@ class UserController extends Controller
      */
     public function index()
     {
-        //
+        $users = User::all();
+        return view('users.index', compact('users'));
     }
 
     /**
@@ -35,6 +37,8 @@ class UserController extends Controller
         if ($request->user()->cannot('create', User::class)) {
             abort(403);
         }
+
+        return view('users.create');
     }
 
     /**
@@ -59,6 +63,7 @@ class UserController extends Controller
             $validated['avatar_path'] = $request->file('avatar')->store('avatars');
         }
 
+        $validated['password'] = Hash::make($validated['password']);
         $user = User::create($validated);
         event(new Registered($user));
         return redirect()->route('users.show', $user);
@@ -72,7 +77,7 @@ class UserController extends Controller
      */
     public function show(User $user)
     {
-        //
+        return view('users.show', compact('user'));
     }
 
     /**
@@ -86,6 +91,8 @@ class UserController extends Controller
         if ($request->user()->cannot('update', $user)) {
             abort(403);
         }
+
+        return view('users.edit', compact('user'));
     }
 
     /**
@@ -102,15 +109,15 @@ class UserController extends Controller
         }
 
         $validated = $request->validate([
-            'name' => 'nullable',
-            'email' => 'email',
+            'name' => 'required',
+            'email' => 'required|email',
         ]);
 
         if ($request->hasFile('avatar')) {
             $validated['avatar_path'] = $request->file('avatar')->store('avatars');
+            Storage::disk()->delete($user->avatar_path);
         }
 
-        Storage::disk()->delete($user->avatar_path);
         $user->update($validated);
         return redirect()->route('users.show', $user);
     }

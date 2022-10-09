@@ -13,6 +13,8 @@ class User extends Authenticatable implements MustVerifyEmail
 {
     use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
 
+    const DEFAULT_AVATAR_PATH = 'avatars/default.png';
+
     /**
      * The attributes that are mass assignable.
      *

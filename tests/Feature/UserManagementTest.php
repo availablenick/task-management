@@ -12,9 +12,18 @@ class UserManagementTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_user_page_can_be_rendered()
+    public function test_user_list_page_can_be_rendered()
     {
-        $response = $this->get(route('users.index'));
+        $user = User::factory()->create();
+        $response = $this->actingAs($user)->get(route('users.index'));
+
+        $response->assertStatus(200);
+    }
+    
+    public function test_user_creation_page_can_be_rendered()
+    {
+        $user = User::factory()->create();
+        $response = $this->loginAsAdmin()->get(route('users.create'));
 
         $response->assertStatus(200);
     }
@@ -22,7 +31,15 @@ class UserManagementTest extends TestCase
     public function test_user_details_page_can_be_rendered()
     {
         $user = User::factory()->create();
-        $response = $this->get(route('users.show', $user));
+        $response = $this->actingAs($user)->get(route('users.show', $user));
+
+        $response->assertStatus(200);
+    }
+
+    public function test_user_edit_page_can_be_rendered()
+    {
+        $user = User::factory()->create();
+        $response = $this->actingAs($user)->get(route('users.edit', $user));
 
         $response->assertStatus(200);
     }
@@ -85,6 +102,22 @@ class UserManagementTest extends TestCase
         $response->assertInvalid(['password']);
     }
 
+    public function test_user_cannot_be_updated_without_name()
+    {
+        $user = User::factory()->create();
+        $response = $this->loginAsAdmin()->put(route('users.update', $user));
+
+        $response->assertInvalid(['name']);
+    }
+
+    public function test_user_cannot_be_updated_without_email()
+    {
+        $user = User::factory()->create();
+        $response = $this->loginAsAdmin()->put(route('users.update', $user));
+
+        $response->assertInvalid(['email']);
+    }
+
     public function test_user_cannot_be_updated_with_invalid_email()
     {
         $user = User::factory()->create();
@@ -95,9 +128,25 @@ class UserManagementTest extends TestCase
         $response->assertInvalid(['email']);
     }
 
+    public function test_guest_cannot_access_index_page()
+    {
+        $user = User::factory()->create();
+        $response = $this->get(route('users.index'));
+
+        $response->assertRedirect(route('login'));
+    }
+
     public function test_guest_cannot_access_creation_page()
     {
         $response = $this->get(route('users.create'));
+
+        $response->assertRedirect(route('login'));
+    }
+
+    public function test_guest_cannot_access_details_page()
+    {
+        $user = User::factory()->create();
+        $response = $this->get(route('users.show', $user));
 
         $response->assertRedirect(route('login'));
     }
