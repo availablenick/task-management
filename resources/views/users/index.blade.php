@@ -30,14 +30,10 @@
 					@foreach ($users as $user)
 						<tr class="align-middle">
 							<td>
-								@php
-									$avatarPath = $user->avatar_path ?? $user::DEFAULT_AVATAR_PATH;
-								@endphp
-
 								<img
 									class="img-fluid"
 									width="50"
-									src="{{ asset('storage/' . $avatarPath) }}"
+									src="{{ asset('storage/' . $user->avatarPathOrDefault) }}"
 									alt="avatar"
 								>
 							</td>

@@ -7,14 +7,10 @@
 		style="background: #fff"
 	>
         <div class="border-bottom p-3">
-			@php
-				$avatarPath = $user->avatar_path ?? $user::DEFAULT_AVATAR_PATH;
-			@endphp
-
 			<img
 				class="img-fluid"
 				width="150"
-				src="{{ asset('storage/' . $avatarPath) }}"
+				src="{{ asset('storage/' . $user->avatarPathOrDefault) }}"
 				alt="avatar"
 			>
 		</div>

@@ -13,8 +13,6 @@ class User extends Authenticatable implements MustVerifyEmail
 {
     use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
 
-    const DEFAULT_AVATAR_PATH = 'avatars/default.png';
-
     /**
      * The attributes that are mass assignable.
      *
@@ -49,5 +47,10 @@ class User extends Authenticatable implements MustVerifyEmail
     public function projects()
     {
         return $this->hasMany(Project::class);
+    }
+
+    public function getAvatarPathOrDefaultAttribute()
+    {
+        return $this->avatar_path ?? 'avatars/default.png';
     }
 }
