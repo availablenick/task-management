@@ -9,7 +9,7 @@ class ClientController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth')->except(['index', 'show']);
+        $this->middleware('auth');
     }
 
     /**
@@ -19,7 +19,8 @@ class ClientController extends Controller
      */
     public function index()
     {
-        //
+        $clients = Client::all();
+        return view('clients.index', compact('clients'));
     }
 
     /**
@@ -32,6 +33,8 @@ class ClientController extends Controller
         if ($request->user()->cannot('create', Client::class)) {
             abort(403);
         }
+
+        return view('clients.create');
     }
 
     /**
@@ -53,6 +56,10 @@ class ClientController extends Controller
             'is_active' => 'boolean',
         ]);
 
+        if (!$request->has('is_active')) {
+            $validated['is_active'] = false;
+        }
+
         $client = Client::create($validated);
         return redirect()->route('clients.show', $client);
     }
@@ -65,7 +72,7 @@ class ClientController extends Controller
      */
     public function show(Client $client)
     {
-        //
+        return view('clients.show', compact('client'));
     }
 
     /**
@@ -79,6 +86,8 @@ class ClientController extends Controller
         if ($request->user()->cannot('update', $client)) {
             abort(403);
         }
+
+        return view('clients.edit', compact('client'));
     }
 
     /**
@@ -95,11 +104,15 @@ class ClientController extends Controller
         }
 
         $validated = $request->validate([
-            'company' => 'nullable',
-            'vat' => 'integer',
-            'address' => 'nullable',
+            'company' => 'required',
+            'vat' => 'required|integer',
+            'address' => 'required',
             'is_active' => 'boolean',
         ]);
+
+        if (!$request->has('is_active')) {
+            $validated['is_active'] = false;
+        }
 
         $client->update($validated);
         return redirect()->route('clients.show', $client);

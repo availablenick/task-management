@@ -11,9 +11,16 @@ class ClientManagementTest extends TestCase
 {
     use RefreshDatabase;
 
-	public function test_client_page_can_be_rendered()
+	public function test_client_list_page_can_be_rendered()
 	{
-		$response = $this->get(route('clients.index'));
+		$response = $this->login()->get(route('clients.index'));
+
+		$response->assertStatus(200);
+	}
+
+	public function test_client_creation_page_can_be_rendered()
+	{
+		$response = $this->login(true)->get(route('clients.create'));
 
 		$response->assertStatus(200);
 	}
@@ -21,7 +28,15 @@ class ClientManagementTest extends TestCase
 	public function test_client_details_page_can_be_rendered()
 	{
 		$client = Client::factory()->create();
-		$response = $this->get(route('clients.show', $client));
+		$response = $this->login()->get(route('clients.show', $client));
+
+		$response->assertStatus(200);
+	}
+
+	public function test_client_edit_page_can_be_rendered()
+	{
+		$client = Client::factory()->create();
+		$response = $this->login(true)->get(route('clients.edit', $client));
 
 		$response->assertStatus(200);
 	}
@@ -65,6 +80,22 @@ class ClientManagementTest extends TestCase
 		$response->assertInvalid(['is_active']);
 	}
 
+	public function test_client_cannot_be_updated_without_company()
+	{
+		$client = Client::factory()->create();
+		$response = $this->login(true)->put(route('clients.update', $client));
+		
+		$response->assertInvalid(['company']);
+	}
+
+	public function test_client_cannot_be_updated_without_vat()
+	{
+		$client = Client::factory()->create();
+		$response = $this->login(true)->put(route('clients.update', $client));
+		
+		$response->assertInvalid(['vat']);
+	}
+
 	public function test_client_cannot_be_updated_with_non_integer_vat()
 	{
 		$client = Client::factory()->create();
@@ -73,6 +104,14 @@ class ClientManagementTest extends TestCase
 		]);
 
 		$response->assertInvalid(['vat']);
+	}
+
+	public function test_client_cannot_be_updated_without_address()
+	{
+		$client = Client::factory()->create();
+		$response = $this->login(true)->put(route('clients.update', $client));
+
+		$response->assertInvalid(['address']);
 	}
 
 	public function test_client_cannot_be_updated_with_non_boolean_active_flag()
@@ -84,10 +123,25 @@ class ClientManagementTest extends TestCase
 
 		$response->assertInvalid(['is_active']);
 	}
+	
+	public function test_guest_cannot_access_index_page()
+	{
+		$response = $this->get(route('clients.index'));
+
+		$response->assertRedirect(route('login'));
+	}
 
 	public function test_guest_cannot_access_creation_page()
 	{
 		$response = $this->get(route('clients.create'));
+
+		$response->assertRedirect(route('login'));
+	}
+
+	public function test_guest_cannot_access_details_page()
+	{
+		$client = Client::factory()->create();
+		$response = $this->get(route('clients.show', $client));
 
 		$response->assertRedirect(route('login'));
 	}
