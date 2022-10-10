@@ -16,6 +16,11 @@ class Client extends Model
         'is_active',
     ];
 
+    public function getStatusAttribute()
+    {
+        return $this->is_active ? 'Active' : 'Inactive';
+    }
+
     public function projects()
     {
         return $this->hasMany(Project::class);

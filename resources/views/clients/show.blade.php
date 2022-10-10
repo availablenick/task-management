@@ -10,7 +10,7 @@
 			<div>Company: {{ $client->company }}</div>
 			<div>VAT: {{ $client->vat }}</div>
 			<div>Address: {{ $client->address }}</div>
-			<div>Status: {{ $client->is_active ? 'Active' : 'Inactive' }}</div>
+			<div>Status: {{ $client->status }}</div>
 			<div>
 				<a href="{{ route('clients.edit', $client) }}">
 					<i class="fa-solid fa-pen-to-square"></i>

@@ -37,7 +37,7 @@
 							</td>
 							<td>{{ $client->vat }}</td>
 							<td>{{ $client->address }}</td>
-							<td>{{ $client->is_active ? 'Active' : 'Inactive'}}
+							<td>{{ $client->status }}</td>
 							<td>
 								<a class="btn btn-primary" href="{{ route('clients.edit', $client) }}">
 									Edit
