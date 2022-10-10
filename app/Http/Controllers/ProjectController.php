@@ -11,7 +11,7 @@ class ProjectController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth')->except(['index', 'show']);
+        $this->middleware('auth');
     }
 
     /**
@@ -21,7 +21,8 @@ class ProjectController extends Controller
      */
     public function index()
     {
-        //
+        $projects = Project::with(['client', 'user'])->get();
+        return view('projects.index', compact('projects'));
     }
 
     /**
@@ -34,6 +35,10 @@ class ProjectController extends Controller
         if ($request->user()->cannot('create', Project::class)) {
             abort(403);
         }
+
+        $clients = Client::all();
+        $users = User::all();
+        return view('projects.create', compact('clients', 'users'));
     }
 
     /**
@@ -51,7 +56,15 @@ class ProjectController extends Controller
         $validated = $request->validate([
             'title' => 'required',
             'description' => 'nullable',
-            'deadline' => 'required|date',
+            'deadline' => [
+                'required',
+                'date',
+                function ($attribute, $value, $fail) {
+                    if ($value < date('Y-m-d')) {
+                        $fail('The' . $attribute . 'must not be in the past');
+                    }
+                },
+            ],
             'status' => 'in:0,1',
             'company' => 'required',
             'user_email' => 'required',
@@ -59,7 +72,6 @@ class ProjectController extends Controller
 
         $validated['client_id'] = Client::where('company', $validated['company'])->first()->id;
         $validated['user_id'] = User::where('email', $validated['user_email'])->first()->id;
-        unset($validated['company'], $validated['user_email']);
         $project = Project::create($validated);
         return redirect()->route('projects.show', $project);
     }
@@ -72,7 +84,8 @@ class ProjectController extends Controller
      */
     public function show(Project $project)
     {
-        //
+        $project->load(['client', 'user']);
+        return view('projects.show', compact('project'));
     }
 
     /**
@@ -86,6 +99,11 @@ class ProjectController extends Controller
         if ($request->user()->cannot('update', $project)) {
             abort(403);
         }
+
+        $clients = Client::all();
+        $users = User::all();
+        $project->load(['client', 'user']);
+        return view('projects.edit', compact('project', 'clients', 'users'));
     }
 
     /**
@@ -102,12 +120,20 @@ class ProjectController extends Controller
         }
 
         $validated = $request->validate([
-            'title' => 'nullable',
+            'title' => 'required',
             'description' => 'nullable',
-            'deadline' => 'date',
+            'deadline' => [
+                'required',
+                'date',
+                function ($attribute, $value, $fail) {
+                    if ($value < date('Y-m-d')) {
+                        $fail('The' . $attribute . 'must not be in the past');
+                    }
+                },
+            ],
             'status' => 'in:0,1',
-            'company' => 'nullable',
-            'user_email' => 'nullable',
+            'company' => 'required',
+            'user_email' => 'required',
         ]);
 
         if ($request->has('company')) {
@@ -118,7 +144,6 @@ class ProjectController extends Controller
             $validated['user_id'] = User::where('email', $validated['user_email'])->first()->id;
         }
         
-        unset($validated['company'], $validated['user_email']);
         $project->update($validated);
         return redirect()->route('projects.show', $project);
     }

@@ -27,6 +27,11 @@ class Project extends Model
         return (new \DateTime($this->deadline))->format('m/d/Y');
     }
 
+    public function getFormattedStatusAttribute()
+    {
+        return $this->status === self::OPEN_STATUS ? 'Open' : 'Closed';
+    }
+
     public function client()
     {
         return $this->belongsTo(Client::class);
