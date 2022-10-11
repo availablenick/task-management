@@ -5,12 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\Project;
 use App\Models\Task;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class TaskController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth')->except(['index', 'show']);
+        $this->middleware('auth');
         $this->middleware('verified')->except(['index', 'show']);
     }
 
@@ -21,7 +23,8 @@ class TaskController extends Controller
      */
     public function index()
     {
-        //
+        $tasks = Task::all();
+        return view('tasks.index', compact('tasks'));
     }
 
     /**
@@ -31,7 +34,8 @@ class TaskController extends Controller
      */
     public function create()
     {
-        //
+        $projects = Project::where('user_id', Auth::id())->get();
+        return view('tasks.create', compact('projects'));
     }
 
     /**
@@ -43,9 +47,17 @@ class TaskController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'title' => 'required',
             'description' => 'nullable',
             'project_title' => 'required',
+            'title' => [
+                'required',
+                Rule::unique('tasks')->where(function ($query) use ($request) {
+                    $project = Project::where('title', $request->project_title)->first();
+                    return $query
+                        ->where('title', $request->title)
+                        ->where('project_id', $project->id);
+                }),
+            ],
         ]);
 
         $project = Project::where('title', $validated['project_title'])->first();
@@ -54,7 +66,6 @@ class TaskController extends Controller
         }
 
         $validated['project_id'] = $project->id;
-        unset($validated['project_title']);
         $task = Task::create($validated);
         return redirect()->route('tasks.show', $task);
     }
@@ -67,7 +78,8 @@ class TaskController extends Controller
      */
     public function show(Task $task)
     {
-        //
+        $task->load('project');
+        return view('tasks.show', compact('task'));
     }
 
     /**
@@ -76,9 +88,14 @@ class TaskController extends Controller
      * @param  \App\Models\Task  $task
      * @return \Illuminate\Http\Response
      */
-    public function edit(Task $task)
+    public function edit(Request $request, Task $task)
     {
-        //
+        if ($task->project->user_id != $request->user()->id) {
+            abort(403);
+        }
+
+        $projects = Project::where('user_id', Auth::id())->get();
+        return view('tasks.edit', compact('task', 'projects'));
     }
 
     /**
@@ -94,7 +111,19 @@ class TaskController extends Controller
             abort(403);
         }
 
-        $task->update($request->all());
+        $validated = $request->validate([
+            'description' => 'nullable',
+            'title' => [
+                'required',
+                Rule::unique('tasks')->where(function ($query) use ($request, $task) {
+                    return $query
+                        ->where('title', $request->title)
+                        ->where('project_id', $task->project_id);
+                }),
+            ],
+        ]);
+
+        $task->update($validated);
         return redirect()->route('tasks.show', $task);
     }
 

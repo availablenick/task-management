@@ -13,9 +13,16 @@ class TaskManagementTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_task_page_can_be_rendered()
+    public function test_task_list_page_can_be_rendered()
     {
-        $response = $this->get(route('tasks.index'));
+        $response = $this->login()->get(route('tasks.index'));
+
+        $response->assertStatus(200);
+    }
+
+    public function test_task_creation_page_can_be_rendered()
+    {
+        $response = $this->login()->get(route('tasks.create'));
 
         $response->assertStatus(200);
     }
@@ -28,7 +35,21 @@ class TaskManagementTest extends TestCase
             ->create();
 
         $task = Task::factory()->for($project)->create();
-        $response = $this->get(route('tasks.index'));
+        $response = $this->login()->get(route('tasks.show', $task));
+
+        $response->assertStatus(200);
+    }
+
+    public function test_task_edit_page_can_be_rendered()
+    {
+        $user = User::factory()->create();
+        $project = Project::factory()
+            ->for(Client::factory())
+            ->for($user)
+            ->create();
+
+        $task = Task::factory()->for($project)->create();
+        $response = $this->actingAs($user)->get(route('tasks.edit', $task));
 
         $response->assertStatus(200);
     }
@@ -47,9 +68,76 @@ class TaskManagementTest extends TestCase
         $response->assertInvalid(['project_title']);
     }
 
+    public function test_task_cannot_be_created_with_existing_title_and_project_title_pair()
+    {
+        $project = Project::factory()
+            ->for(Client::factory())
+            ->for(User::factory())
+            ->create();
+
+        $task = Task::factory()->for($project)->create();
+        $response = $this->login()->post(route('tasks.store'), [
+            'title' => $task->title,
+            'project_title' => $project->title,
+        ]);
+
+        $response->assertInvalid(['title']);
+    }
+
+    public function test_task_cannot_be_updated_without_title()
+    {
+        $user = User::factory()->create();
+        $project = Project::factory()
+            ->for(Client::factory())
+            ->for($user)
+            ->create();
+
+        $task = Task::factory()->for($project)->create();
+        $response = $this->actingAs($user)->put(route('tasks.update', $task));
+
+        $response->assertInvalid(['title']);
+    }
+
+    public function test_task_cannot_be_updated_with_existing_title_and_project_title_pair()
+    {
+        $user = User::factory()->create();
+        $project = Project::factory()
+            ->for(Client::factory())
+            ->for($user)
+            ->create();
+
+        $task1 = Task::factory()->for($project)->create();
+        $task2 = Task::factory()->for($project)->create();
+        $response = $this->actingAs($user)->put(route('tasks.update', $task1), [
+            'title' => $task2->title,
+        ]);
+
+        $response->assertInvalid(['title']);
+    }
+
+    public function test_guest_cannot_access_index_page()
+    {
+        $response = $this->get(route('tasks.index'));
+
+        $response->assertRedirect(route('login'));
+    }
+
     public function test_guest_cannot_access_creation_page()
     {
         $response = $this->get(route('tasks.create'));
+
+        $response->assertRedirect(route('login'));
+    }
+
+    public function test_guest_cannot_access_details_page()
+    {
+        $project = Project::factory()
+            ->for(Client::factory())
+            ->for(User::factory())
+            ->create();
+
+        $task = Task::factory()->for($project)->create();
+        $response = $this->get(route('tasks.show', $project));
 
         $response->assertRedirect(route('login'));
     }
@@ -145,6 +233,21 @@ class TaskManagementTest extends TestCase
         $this->assertModelExists($task);
         $this->assertNotNull($project->tasks()->where('title', 'test_title')->first());
         $response->assertRedirect(route('login'));
+    }
+
+    public function test_non_assigned_user_cannot_access_edit_page()
+    {
+        $user1 = User::factory()->create();
+        $user2 = User::factory()->create();
+        $project = Project::factory()
+            ->for(Client::factory())
+            ->for($user1)
+            ->create();
+
+        $task = Task::factory()->for($project)->create();
+        $response = $this->actingAs($user2)->get(route('tasks.edit', $project));
+
+        $response->assertStatus(403);
     }
 
     public function test_non_assigned_user_cannot_create_tasks()
