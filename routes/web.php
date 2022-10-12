@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthenticationController;
+use App\Http\Controllers\AssignmentAlertController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmailVerificationController;
@@ -38,3 +39,8 @@ Route::resource('users', UserController::class);
 Route::resource('clients', ClientController::class);
 Route::resource('projects', ProjectController::class);
 Route::resource('tasks', TaskController::class);
+
+Route::controller(AssignmentAlertController::class)->group(function () {
+    Route::get('/assignment-alerts', 'index')->name('assignment_alerts.index');
+    Route::post('/assignment-alerts/note', 'note')->name('assignment_alerts.note');
+});

@@ -85,9 +85,46 @@
 				</button>
 
 				<div class="d-flex align-items-center my-0">
-					<button type="button" class="custom-item text-decoration-none">
-						<i class="fa-regular fa-bell"></i>
-					</button>
+					<div class="position-relative">
+						<button type="button" class="custom-item custom-btn-alert text-decoration-none">
+							<i class="fa-regular fa-bell"></i>
+							@php
+								$unseenAlerts = Auth::user()->alerts()->where('is_noted', 'false')->get();
+							@endphp
+							@if (count($unseenAlerts) > 0)
+								<span class="custom-alert-count">
+									{{ count($unseenAlerts) }}
+								</span>
+							@endif
+						</button>
+
+						<div class="custom-alert-panel">
+							<div class="custom-alert-card">
+								<div class="custom-header">
+									Alerts
+								</div>
+								<div class="custom-body overflow-auto">
+									@forelse ($unseenAlerts as $alert)
+										<div class="d-flex flex-column border-bottom px-2 pt-1">
+											You've been assigned to
+											<a href="{{ route('projects.show', $alert->project) }}">
+												{{ $alert->project->title }}
+											</a>
+										</div>
+									@empty
+										<div class="d-flex align-items-center justify-content-center h-100">
+											There are no alerts
+										</div>
+									@endforelse
+								</div>
+								<div class="custom-bottom">
+									<a href="{{ route('assignment_alerts.index') }}">
+										All alerts
+									</a>
+								</div>
+							</div>
+						</div>
+					</div>
 					<a class="custom-item text-decoration-none" href="{{ route('users.show', Auth::user()) }}">
 						<i class="fa-regular fa-circle-user"></i>
 					</a>

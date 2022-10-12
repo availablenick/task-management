@@ -1,3 +1,5 @@
+require ("./bootstrap");
+
 document.addEventListener("DOMContentLoaded", () => {
 	let sidebar = document.querySelector(".custom-sidebar");
 	let content = document.querySelector(".custom-content");
@@ -23,11 +25,35 @@ document.addEventListener("DOMContentLoaded", () => {
 	for (let button of deleteButtons) {
 		button.addEventListener("click", (event) => {
 			event.preventDefault();
-			let message = event.target.getAttribute('data-message');
+			let message = event.target.getAttribute("data-message");
 			let shouldDelete = confirm(message);
 			if (shouldDelete) {
 				event.target.form.submit();
 			}
 		})
 	}
+
+	let alertBtn = document.querySelector(".custom-btn-alert");
+	let alertPanel = document.querySelector(".custom-alert-panel");
+	alertBtn.addEventListener("click", () => {
+		let alertCount = document.querySelector(".custom-alert-count");
+		if (alertCount) {
+			alertCount.remove();
+			axios.post("/assignment-alerts/note");
+		}
+
+		if (alertPanel) {
+			if (alertPanel.style.display === "block") {
+				alertPanel.style.display = "";
+			} else {
+				alertPanel.style.display = "block";
+			}
+		}
+	});
+
+	document.addEventListener("click", (event) => {
+		if (!alertPanel.contains(event.target) && !alertBtn.contains(event.target)) {
+			alertPanel.style.display = null;
+		}
+	});
 });

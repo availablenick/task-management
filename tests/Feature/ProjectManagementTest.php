@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\AssignmentAlert;
 use App\Models\Client;
 use App\Models\Project;
 use App\Models\User;
@@ -531,6 +532,45 @@ class ProjectManagementTest extends TestCase
         $this->assertNull($client->projects()->where('title', 'test_title')->first());
         $this->assertNull($user->projects()->where('title', 'test_title')->first());
         $response->assertRedirect(route('projects.index'));
+    }
+
+    public function test_alert_is_sent_to_user_after_they_are_assigned_to_project()
+    {
+        $client = Client::factory()->create();
+        $user = User::factory()->create();
+        $date = now()->addMinutes(30)->toDateString();
+        $response = $this->login(true)->post(route('projects.store'), [
+            'title' => 'test_title',
+            'description' => 'test_description',
+            'deadline' => $date,
+            'status' => Project::OPEN_STATUS,
+            'company' => $client->company,
+            'user_email' => $user->email,
+        ]);
+
+        $this->assertDatabaseHas('projects', [
+            'title' => 'test_title',
+            'description' => 'test_description',
+            'deadline' => $date,
+            'status' => Project::OPEN_STATUS,
+            'client_id' => $client->id,
+            'user_id' => $user->id,
+        ]);
+
+        $project = Project::where('title', 'test_title')->first();
+        $this->assertDatabaseHas('assignment_alerts', [
+            'is_noted' => false,
+            'project_id' => $project->id,
+            'user_id' => $user->id,
+        ]);
+
+        $alert = AssignmentAlert::where('project_id', $project->id)
+            ->where('user_id', $user->id)
+            ->first();
+        $this->assertNotNull($project->alerts()->where('project_id', $project->id)->first());
+        $this->assertNotNull($user->alerts()->where('user_id', $user->id)->first());
+        $this->assertNotNull($alert->project);
+        $this->assertNotNull($alert->user);
     }
 
     /*

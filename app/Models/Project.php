@@ -22,6 +22,17 @@ class Project extends Model
         'user_id',
     ];
 
+    protected static function booted()
+    {
+        static::created(function ($project) {
+            AssignmentAlert::create([
+                'is_noted' => false,
+                'project_id' => $project->id,
+                'user_id' => $project->user_id,
+            ]);
+        });
+    }
+
     public function getFormattedDeadlineAttribute()
     {
         return (new \DateTime($this->deadline))->format('m/d/Y');
@@ -45,5 +56,10 @@ class Project extends Model
     public function tasks()
     {
         return $this->hasMany(Task::class);
+    }
+
+    public function alerts()
+    {
+        return $this->hasMany(AssignmentAlert::class);
     }
 }

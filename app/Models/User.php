@@ -44,13 +44,20 @@ class User extends Authenticatable implements MustVerifyEmail
         'email_verified_at' => 'datetime',
     ];
 
+    protected $with = ['alerts'];
+
+    public function getAvatarPathOrDefaultAttribute()
+    {
+        return $this->avatar_path ?? 'avatars/default.png';
+    }
+
     public function projects()
     {
         return $this->hasMany(Project::class);
     }
 
-    public function getAvatarPathOrDefaultAttribute()
+    public function alerts()
     {
-        return $this->avatar_path ?? 'avatars/default.png';
+        return $this->hasMany(AssignmentAlert::class);
     }
 }

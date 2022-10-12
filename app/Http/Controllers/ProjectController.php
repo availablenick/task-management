@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\ProjectCreated;
 use App\Models\Client;
 use App\Models\Project;
 use App\Models\User;
@@ -71,8 +72,10 @@ class ProjectController extends Controller
         ]);
 
         $validated['client_id'] = Client::where('company', $validated['company'])->first()->id;
-        $validated['user_id'] = User::where('email', $validated['user_email'])->first()->id;
+        $user = User::where('email', $validated['user_email'])->first();
+        $validated['user_id'] = $user->id;
         $project = Project::create($validated);
+        // event(new ProjectCreated($project, $user));
         return redirect()->route('projects.show', $project);
     }
 
