@@ -17,18 +17,18 @@
 					<input class="form-control" type="email" name="email" id="email" placeholder="name@example.com">
 				</div>
 
-				@error('email')
-					<div class="alert alert-danger">
-						{{ $message }}
-					</div>
-				@enderror
-
 				<div class="mb-3">
 					<label class="form-label" for="password">Password</label>
 					<input class="form-control" type="password" name ="password" id="password">
 				</div>
 
 				@error('password')
+					<div class="alert alert-danger">
+						{{ $message }}
+					</div>
+				@enderror
+
+				@error('email')
 					<div class="alert alert-danger">
 						{{ $message }}
 					</div>

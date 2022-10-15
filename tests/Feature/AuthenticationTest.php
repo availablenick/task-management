@@ -17,6 +17,16 @@ class AuthenticationTest extends TestCase
         $response->assertStatus(200);
     }
 
+    public function test_invalid_credentials_results_in_errors()
+    {
+        $response = $this->post(route('authenticate'), [
+            'email' => 'aew@aew.com',
+            'password' => 'wrong',
+        ]);
+
+        $response->assertSessionHasErrors('email');
+    }
+
     public function test_guest_cannot_login_without_email_or_password()
     {
         $response = $this->post(route('authenticate'));

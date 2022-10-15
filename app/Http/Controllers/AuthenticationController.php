@@ -24,6 +24,10 @@ class AuthenticationController extends Controller
 
             return redirect()->route('dashboard');
         }
+
+        return back()->withErrors([
+            'email' => 'The provided credentials do not match any records',
+        ]);
     }
 
     public function logout(Request $request)
