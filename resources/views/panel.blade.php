@@ -86,14 +86,18 @@
 
 				<div class="d-flex align-items-center my-0">
 					<div class="position-relative">
+						@php
+							$unseenAlerts = Auth::user()->alerts()->where('is_noted', 'false')->get();
+						@endphp
+
 						<button type="button" class="custom-item custom-btn-alert text-decoration-none">
 							<i class="fa-regular fa-bell"></i>
 							@php
-								$unseenAlerts = Auth::user()->alerts()->where('is_noted', 'false')->get();
+								$count = count($unseenAlerts);
 							@endphp
-							@if (count($unseenAlerts) > 0)
+							@if ($count > 0)
 								<span class="custom-alert-count">
-									{{ count($unseenAlerts) }}
+									{{ $count <= 99 ? $count : '99+' }}
 								</span>
 							@endif
 						</button>

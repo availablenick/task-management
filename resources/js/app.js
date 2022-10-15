@@ -43,17 +43,23 @@ document.addEventListener("DOMContentLoaded", () => {
 		}
 
 		if (alertPanel) {
+			console.log(alertPanel.style.display);
 			if (alertPanel.style.display === "block") {
+				console.log('first');
 				alertPanel.style.display = "";
 			} else {
+				console.log('second');
 				alertPanel.style.display = "block";
 			}
 		}
 	});
 
 	document.addEventListener("click", (event) => {
-		if (!alertPanel.contains(event.target) && !alertBtn.contains(event.target)) {
-			alertPanel.style.display = null;
+		if (document.body.contains(event.target) &&
+			!alertPanel.contains(event.target) &&
+			!alertBtn.contains(event.target))
+		{
+			alertPanel.style.display = "";
 		}
 	});
 });
